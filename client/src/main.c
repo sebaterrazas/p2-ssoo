@@ -19,10 +19,15 @@ char * get_input(){
 
 int main (int argc, char *argv[]){
   //Se obtiene la ip y el puerto donde está escuchando el servidor (la ip y puerto de este cliente da igual)
-  char * IP = "0.0.0.0";
-  int PORT = 8080;
+  char * IP = (char *)argv[2];
+  int PORT = atoi(argv[4]);
 
+  pid_t child_pid = fork();
+  if (child_pid == 0) {
+    char *args[]={"ssh", "-L", PORT, ":", IP, ":", PORT, "iic2333.ing.puc.cl", NULL};
+    execvp(args[0],args);
   // Se prepara el socket
+
   int server_socket = prepare_socket(IP, PORT);
 
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
