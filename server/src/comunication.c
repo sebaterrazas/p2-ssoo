@@ -33,3 +33,24 @@ void server_send_message(int client_socket, int pkg_id, char * message){
   // Se envía el paquete
   send(client_socket, msg, 2+payloadSize, 0);
 }
+
+void server_send_image(int client_socket, int pkg_id, char * image_route){
+  FILE *image_file = fopen(image_route, "rb");
+  fseek(image_file, 0, SEEK_END); // seek to end of file
+  size_t size = ftell(image_file); // get current file pointer
+  fseek(image_file, 0, SEEK_SET); // seek back to beginning of file
+  char buffer[size];
+  int succ = fread(buffer, size, 1, image_file);
+  if (succ != 1) printf("error reading image file");
+  int payloadSize = size;
+  printf("payloadSize: %d\n", payloadSize);
+  fclose(image_file);
+  //printf("payload size: %d\n", payloadSize);
+  // Se arma el paquete: ID (1B), payloadSize (3B), payload (payloadSize B)
+  char msg[1+3+payloadSize];
+  msg[0] = pkg_id;
+  memcpy(&msg[1], &payloadSize, 3);
+  memcpy(&msg[4], buffer, payloadSize);
+  // Se envía el paquete
+  send(client_socket, msg, 4+payloadSize, 0);
+}

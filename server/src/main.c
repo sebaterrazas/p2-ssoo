@@ -28,7 +28,8 @@ int main(int argc, char *argv[]){
 
   // Le enviamos al primer cliente un mensaje de bienvenida
   char * welcome = "Bienvenido Cliente 1!!";
-  server_send_message(players_info->socket_c1, 1, welcome);
+  //server_send_message(players_info->socket_c1, 1, welcome);
+  server_send_image(players_info->socket_c1, 0, "welldone.jpg");
 
   // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
   int sockets_array[2] = {players_info->socket_c1, players_info->socket_c2};

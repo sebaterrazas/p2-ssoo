@@ -18,6 +18,22 @@ char * client_receive_payload(int client_socket){
   return payload;
 }
 
+char * client_receive_image(int client_socket){
+  // Se obtiene el largo del payload
+  int len = 0;
+  recv(client_socket, &len, 3, 0);
+  printf("len: %d\n", len);
+  // Se obtiene el payload
+  char * payload = malloc(len);
+  int received = recv(client_socket, payload, len, 0);
+  FILE *image_file = fopen("image.jpg", "wb");
+  fwrite(payload, len, 1, image_file);
+  fclose(image_file);
+  free(payload);
+  // Se retorna
+  return "image.jpg downloaded";
+}
+
 void client_send_message(int client_socket, int pkg_id, char * message){
   int payloadSize = strlen(message) + 1; //+1 para considerar el caracter nulo. 
   //Esto solo es válido para strings, Ustedes cuando armen sus paquetes saben exactamente cuantos bytes tiene el payload.
