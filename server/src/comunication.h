@@ -11,6 +11,7 @@ typedef struct user {
     char *name;
     char *phase;  // login, lobby, game
     char *status; // online, offline
+    struct room *room;
 } User;
 
 typedef struct room {
@@ -18,6 +19,8 @@ typedef struct room {
     User* client2;
     int room_id;
     int occupied_by;
+    bool p1_ready;
+    bool p2_ready;
 } Room;
 
 

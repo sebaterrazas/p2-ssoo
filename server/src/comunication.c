@@ -84,15 +84,19 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   }
   User* client_user = current_users[user_id];
   int msg_code = server_receive_id(client_socket);
-  // char* client_message = malloc(255);
   char* client_message = server_receive_payload(client_socket);
   printf("El cliente %d dice: %s\n", client_socket, client_message);
+
   char response[500];
   strcpy(response, "");
   if (strcmp(client_message, "exit")==0) {
     client_user->status = "offline";
     // Le enviamos la respuesta
     server_send_message(client_socket, 1, "¡Hasta luego!");
+    return true;
+  }
+  if (strcmp(client_message, "force exit")==0) {
+    client_user->status = "offline";
     return true;
   }
   // Si el usuario no tiene nombre, entonces este es el mensaje preguntandole por el nombre
