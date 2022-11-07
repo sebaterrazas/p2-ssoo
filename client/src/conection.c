@@ -20,6 +20,7 @@ int prepare_socket(char * IP, int PORT){
 
 void signal_callback_handler(int signum) {
    client_send_message(server_socket, 1, "exit");
+   printf("\n¡Hasta luego!\n");
    // Terminate program
    exit(signum);
 }

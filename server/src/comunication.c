@@ -91,6 +91,8 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   strcpy(response, "");
   if (strcmp(client_message, "exit")==0) {
     client_user->status = "offline";
+    // Le enviamos la respuesta
+    server_send_message(client_socket, 1, "¡Hasta luego!");
     return true;
   }
   // Si el usuario no tiene nombre, entonces este es el mensaje preguntandole por el nombre
@@ -105,6 +107,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         client_user->id = old_user->id;
         client_user->name = old_user->name;
         client_user->phase = old_user->phase;
+        client_user->status = "online";
         current_users[old_user->id] = client_user;
         free(old_user);
         strcat(response, reconnect_msg(client_user, current_users, rooms_list, MAX_CLIENTS));
@@ -129,16 +132,16 @@ char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   char* lobby = malloc(500);
   strcpy(lobby, "Usuarios:\n");
   for (int i = 0; i < MAX_CLIENTS; i++) {
-    if (current_users[i] != NULL) {
-      char socket_num[25];
-      sprintf(socket_num, "%d", current_users[i]->socket);
+    if (current_users[i] != NULL && strcmp(current_users[i]->phase, "login")!=0) {
 
       char user[50];
       strcpy(user, "\t- ");
       strcat(user, current_users[i]->name);
-      strcat(user, " (");
-      strcat(user, socket_num);
-      strcat(user, ")\n");
+      strcat(user, " [ ");
+      strcat(user, current_users[i]->phase);
+      strcat(user, " | ");
+      strcat(user, current_users[i]->status);
+      strcat(user, " ]\n");
       strcat(lobby, user);
     }
   }

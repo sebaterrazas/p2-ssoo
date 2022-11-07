@@ -46,7 +46,6 @@ int main (int argc, char *argv[]){
     }
 
     if (msg_code == 1) { //Recibimos un mensaje de servidor 
-      if (strcmp(message, "Servidor lleno") == 0) break;
       printf("%s\n", message);
     }
 
@@ -54,22 +53,23 @@ int main (int argc, char *argv[]){
       printf("El otro cliente dice: %s\n", message);
     }
     
-    if (msg_code != 0) free(message);
 
-    //printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
-    //int option = getchar() - '0';
-    //getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
-    int option = 1;
-    
-    //printf("Ingrese su mensaje: ");
-    char * response = get_input();
-    client_send_message(server_socket, option, response);
-    printf("------------------\n");
+    if (strcmp(message, "Servidor lleno") != 0 && strcmp(message, "¡Hasta luego!") != 0) {
+      int option = 1; //Por defecto, se envía un mensaje al servidor
+      char * response = get_input();
+      client_send_message(server_socket, option, response);
+      free(response);
+      if (msg_code != 0) free(message);
+      printf("------------------\n");
+    } else {
+      if (msg_code != 0) free(message);
+      printf("------------------\n");
+      break;
+    }
   }
 
   // Se cierra el socket
   close(server_socket);
-  free(IP);
 
   return 0;
 }
