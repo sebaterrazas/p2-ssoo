@@ -22,42 +22,59 @@ int main(int argc, char *argv[]){
   // Se define una IP y un puerto
   char * IP = (char *)argv[2];
   int PORT = atoi(argv[4]);
+  int MAX_CLIENTS = 20;
 
-  // Se crea el servidor y se obtienen los sockets de ambos clientes.
-  PlayersInfo * players_info = prepare_sockets_and_get_clients(IP, PORT);
+  // Se crea el servidor
+  int server_socket = setup_server(IP, PORT); 
+  fd_set current_sockets, ready_sockets;
 
-  // Le enviamos al primer cliente un mensaje de bienvenida
-  char * welcome = "Bienvenido Cliente 1!!";
-  //server_send_message(players_info->socket_c1, 1, welcome);
-  server_send_image(players_info->socket_c1, 0, "welldone.jpg");
+  // Se inicializa el conjunto de descriptores de archivos
+  FD_ZERO(&current_sockets);
+  FD_SET(server_socket, &current_sockets);
 
-  // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
-  int sockets_array[2] = {players_info->socket_c1, players_info->socket_c2};
-  int my_attention = 0;
-  while (1)
-  {
-    // Se obtiene el paquete del cliente 1
-    int msg_code = server_receive_id(sockets_array[my_attention]);
+  User** current_users = calloc(MAX_CLIENTS+5, sizeof(User*));
+  // Se inicializa la lista con valores NULL
+  for (int i = 0; i < MAX_CLIENTS+5; i++) {
+    current_users[i] = NULL;
+  }
 
-    if (msg_code == 1) //El cliente me envió un mensaje a mi (servidor)
-    {
-      char * client_message = server_receive_payload(sockets_array[my_attention]);
-      printf("El cliente %d dice: %s\n", my_attention+1, client_message);
+  Room** rooms_list = calloc(MAX_CLIENTS/2, sizeof(Room*));
+  // Se inicializa la lista con Salas vacías
+  for (int i = 0; i < MAX_CLIENTS/2; i++) {
+    Room* room = malloc(sizeof(Room));
+    room->client1 = NULL;
+    room->client2 = NULL;
+    room->room_id = i;
+    room->occupied_by = 0;
+    rooms_list[i] = room;
+  }
 
-      // Le enviaremos el mismo mensaje invertido jeje
-      char * response = revert(client_message);
+  while (1) {
+    ready_sockets = current_sockets;
 
-      // Le enviamos la respuesta
-      server_send_message(sockets_array[my_attention], 1, response);
+    if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0) {
+      perror("select");
+      exit(EXIT_FAILURE);
     }
-    else if (msg_code == 2){ //El cliente le envía un mensaje al otro cliente
-      char * client_message = server_receive_payload(sockets_array[my_attention]);
-      printf("Servidor traspasando desde %d a %d el mensaje: %s\n", my_attention+1, ((my_attention+1)%2)+1, client_message);
 
-      // Mi atención cambia al otro socket
-      my_attention = (my_attention + 1) % 2;
-
-      server_send_message(sockets_array[my_attention], 2, client_message);
+    // Se revisa cada socket para ver si hay algo que leer
+    for (int i = 0; i < FD_SETSIZE; i++) {
+      if (FD_ISSET(i, &ready_sockets)) {
+        if (i == server_socket) {
+          // Se acepta una nueva conexión
+          int client_socket = accept_new_connection(server_socket);
+          server_send_message(client_socket, 1, "Bienvenido al servidor, ¿cuál es tu nombre?");
+          User* client_user = malloc(sizeof(User));
+          client_user->socket = client_socket;
+          client_user->name = NULL;
+          client_user->phase = "login";
+          current_users[client_socket] = client_user;
+          FD_SET(client_socket, &current_sockets);
+        } else {
+          handle_communication(current_users[i], current_users, rooms_list, MAX_CLIENTS);
+          // FD_CLR(i, &current_sockets);
+        }
+      }
     }
     printf("------------------\n");
   }

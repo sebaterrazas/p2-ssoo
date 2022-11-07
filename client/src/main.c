@@ -31,7 +31,7 @@ int main (int argc, char *argv[]){
     int msg_code = client_receive_id(server_socket);
 
     char * message;
-    if (msg_code == 0) { //Recibimos un mensaje del servidor
+    if (msg_code == 0) { //Recibimos una imagen
       message = client_receive_image(server_socket);
       printf("El servidor te ha enviado una imagen [%s]\n", message);
     }
@@ -39,8 +39,8 @@ int main (int argc, char *argv[]){
       message = client_receive_payload(server_socket);
     }
 
-    if (msg_code == 1) { //Recibimos un mensaje del servidor
-      printf("El servidor dice: %s\n", message);
+    if (msg_code == 1) { //Recibimos un mensaje de servidor 
+      printf("%s\n", message);
     }
 
     if (msg_code == 2) { //Recibimos un mensaje que proviene del otro cliente
@@ -49,13 +49,13 @@ int main (int argc, char *argv[]){
     
     if (msg_code != 0) free(message);
 
-    printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
-    int option = getchar() - '0';
-    getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
+    //printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
+    //int option = getchar() - '0';
+    //getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
+    int option = 1;
     
-    printf("Ingrese su mensaje: ");
+    //printf("Ingrese su mensaje: ");
     char * response = get_input();
-
     client_send_message(server_socket, option, response);
     printf("------------------\n");
   }

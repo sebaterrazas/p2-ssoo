@@ -23,15 +23,28 @@ char * server_receive_payload(int client_socket){
 }
 
 void server_send_message(int client_socket, int pkg_id, char * message){
-  int payloadSize = strlen(message) + 1;
-  //printf("payload size: %d\n", payloadSize);
-  // Se arma el paquete
-  char msg[1+1+payloadSize];
+  int size = strlen(message) + 1;
+
+  char msg[1+1+3];
   msg[0] = pkg_id;
-  msg[1] = payloadSize;
-  memcpy(&msg[2], message, payloadSize);
-  // Se envía el paquete
-  send(client_socket, msg, 2+payloadSize, 0);
+  msg[1] = 3;
+  memcpy(&msg[2], &size, 3);
+  send(client_socket, msg, 5, 0);
+  int bytes_sent = 0;
+  while (bytes_sent != size) {
+    int bytes_to_send = size - bytes_sent;
+    if (bytes_to_send > 255) {
+      bytes_to_send = 255;
+    }
+    char buffer[bytes_to_send];
+    char msg[1+1+bytes_to_send];
+    msg[0] = pkg_id;
+    msg[1] = bytes_to_send;
+    memcpy(&msg[2], &message[bytes_sent], bytes_to_send);
+    // Se envía el paquete
+    send(client_socket, msg, 2+bytes_to_send, 0);
+    bytes_sent += bytes_to_send;
+  }
 }
 
 void server_send_image(int client_socket, int pkg_id, char * image_route){
@@ -61,4 +74,66 @@ void server_send_image(int client_socket, int pkg_id, char * image_route){
     send(client_socket, msg, 2+bytes_to_send, 0);
     bytes_sent += bytes_to_send;
   }
+  fclose(image_file);
+}
+
+void handle_communication(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
+  int client_socket = client_user->socket;
+  int msg_code = server_receive_id(client_socket);
+  char * client_message = server_receive_payload(client_socket);
+  printf("El cliente %d dice: %s\n", client_socket, client_message);
+  char response[500];
+  strcpy(response, "");
+  // Si el usuario no tiene nombre, entonces este era el mensaje preguntandole por el nombre
+  // Entonces se lo asignamos y le mostramos el lobby. 
+  if (client_user->name==NULL) {
+    client_user->name = client_message;
+    client_user->phase = "lobby";
+    strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+
+  }
+  // Si el usuario está en el lobby, y apretó enter (mensaje vacío) entonces quería actualizar el lobby
+  else if (strcmp(client_message, "")==0 && strcmp(client_user->phase, "lobby")==0) {
+    strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+  }
+  // Le enviamos la respuesta
+  server_send_message(client_socket, 1, response);
+}
+
+char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
+  char* lobby = malloc(500);
+  strcpy(lobby, "Usuarios:\n");
+  for (int i = 0; i < MAX_CLIENTS; i++) {
+    if (current_users[i] != NULL) {
+      char socket_num[25];
+      sprintf(socket_num, "%d", current_users[i]->socket);
+
+      char user[50];
+      strcpy(user, "\t- ");
+      strcat(user, current_users[i]->name);
+      strcat(user, " (");
+      strcat(user, socket_num);
+      strcat(user, ")\n");
+      strcat(lobby, user);
+    }
+  }
+  strcat(lobby, "\nSalas:\n");
+  for (int i = 0; i < MAX_CLIENTS/2; i++) {
+    if (rooms_list[i] != NULL) {
+      char room_num[10];
+      sprintf(room_num, "%d", rooms_list[i]->room_id);
+      char num_clients[10];
+      sprintf(num_clients, "%d", rooms_list[i]->occupied_by);
+
+      char room[50];
+      strcpy(room, "\t- Sala ");
+      strcat(room, room_num);
+      strcat(room, " (");
+      strcat(room, num_clients);
+      strcat(room, " / 2)\n");
+      strcat(lobby, room);
+    }
+  }
+  strcat(lobby, "\nApreta un número para unirte a esa sala, o\napreta enter para actualizar el lobby.");
+  return lobby;
 }

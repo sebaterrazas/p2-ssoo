@@ -9,17 +9,6 @@ int client_receive_id(int client_socket){
 
 char * client_receive_payload(int client_socket){
   // Se obtiene el largo del payload
-  int len = 0;
-  recv(client_socket, &len, 1, 0);
-  // Se obtiene el payload
-  char * payload = malloc(len);
-  int received = recv(client_socket, payload, len, 0);
-  // Se retorna
-  return payload;
-}
-
-char * client_receive_image(int client_socket){
-  // Se obtiene el largo del payload
   int len_size = 0;
   recv(client_socket, &len_size, 1, 0); // Siempre 3
   int len = 0;
@@ -37,6 +26,13 @@ char * client_receive_image(int client_socket){
     memcpy(&payload[bytes_recieved], buffer, buffer_len);
     bytes_recieved += buffer_len;
   }
+  // Se retorna
+  return payload;
+}
+
+char * client_receive_image(int client_socket){
+  char * payload = client_receive_payload(client_socket);
+  int len = strlen(payload);
   FILE *image_file = fopen("image.jpg", "wb");
   fwrite(payload, len, 1, image_file);
   fclose(image_file);
