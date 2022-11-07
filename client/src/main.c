@@ -40,6 +40,7 @@ int main (int argc, char *argv[]){
     }
 
     if (msg_code == 1) { //Recibimos un mensaje de servidor 
+      if (strcmp(message, "Servidor lleno") == 0) break;
       printf("%s\n", message);
     }
 

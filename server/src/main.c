@@ -63,6 +63,10 @@ int main(int argc, char *argv[]){
         if (i == server_socket) {
           // Se acepta una nueva conexión
           int client_socket = accept_new_connection(server_socket);
+          if (client_socket >= MAX_CLIENTS + 5) {
+            server_send_message(client_socket, 1, "Servidor lleno");
+            continue;
+          }
           server_send_message(client_socket, 1, "Bienvenido al servidor, ¿cuál es tu nombre?");
           User* client_user = malloc(sizeof(User));
           client_user->socket = client_socket;
@@ -71,6 +75,7 @@ int main(int argc, char *argv[]){
           current_users[client_socket] = client_user;
           FD_SET(client_socket, &current_sockets);
         } else {
+          // Se maneja una conexión existente
           handle_communication(current_users[i], current_users, rooms_list, MAX_CLIENTS);
           // FD_CLR(i, &current_sockets);
         }
@@ -78,6 +83,7 @@ int main(int argc, char *argv[]){
     }
     printf("------------------\n");
   }
+  free_memory(current_users, rooms_list, MAX_CLIENTS);
 
   return 0;
 }

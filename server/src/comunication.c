@@ -80,17 +80,22 @@ void server_send_image(int client_socket, int pkg_id, char * image_route){
 void handle_communication(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   int client_socket = client_user->socket;
   int msg_code = server_receive_id(client_socket);
-  char * client_message = server_receive_payload(client_socket);
+  // char* client_message = malloc(255);
+  char* client_message = server_receive_payload(client_socket);
   printf("El cliente %d dice: %s\n", client_socket, client_message);
   char response[500];
   strcpy(response, "");
   // Si el usuario no tiene nombre, entonces este era el mensaje preguntandole por el nombre
   // Entonces se lo asignamos y le mostramos el lobby. 
   if (client_user->name==NULL) {
-    client_user->name = client_message;
-    client_user->phase = "lobby";
-    strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
-
+    if (!username_available(client_message, current_users, MAX_CLIENTS)) {
+      strcat(response, "El nombre de usuario ya está en uso, por favor elija otro.");
+    } else {
+      strcat(response, "Bienvenido al lobby\n\n");
+      client_user->name = client_message;
+      client_user->phase = "lobby";
+      strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+    }
   }
   // Si el usuario está en el lobby, y apretó enter (mensaje vacío) entonces quería actualizar el lobby
   else if (strcmp(client_message, "")==0 && strcmp(client_user->phase, "lobby")==0) {
@@ -134,6 +139,33 @@ char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
       strcat(lobby, room);
     }
   }
-  strcat(lobby, "\nApreta un número para unirte a esa sala, o\napreta enter para actualizar el lobby.");
+  strcat(lobby, "\nApreta un número para unirte a esa sala, o\napreta Enter para actualizar el lobby.");
   return lobby;
+}
+
+bool username_available(char* username, User** current_users, int MAX_CLIENTS) {
+  for (int i = 0; i < MAX_CLIENTS + 5; i++) {
+    if (current_users[i] != NULL && current_users[i]->name != NULL) {
+      if (strcmp(current_users[i]->name, username)==0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+void free_memory(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
+  for (int i = 0; i < MAX_CLIENTS + 5; i++) {
+    if (current_users[i] != NULL) {
+      free(current_users[i]);
+    }
+  }
+  free(current_users);
+
+  for (int i = 0; i < MAX_CLIENTS/2; i++) {
+    if (rooms_list[i] != NULL) {
+      free(rooms_list[i]);
+    }
+  }
+  free(rooms_list);
 }
