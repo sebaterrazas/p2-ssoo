@@ -1,7 +1,10 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <signal.h>
 #include "conection.h"
 #include "comunication.h"
+
+extern int server_socket; // Variable global, para poder mandar mensaje al manejar una señal de término
 
 char * get_input(){
   char * response = malloc(20);
@@ -24,7 +27,10 @@ int main (int argc, char *argv[]){
 
   // Se prepara el socket
 
-  int server_socket = prepare_socket(IP, PORT);
+  server_socket = prepare_socket(IP, PORT);
+
+  // Register signal and signal handler
+  signal(SIGINT, signal_callback_handler);
 
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
   while (1){

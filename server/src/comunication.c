@@ -77,19 +77,38 @@ void server_send_image(int client_socket, int pkg_id, char * image_route){
   fclose(image_file);
 }
 
-void handle_communication(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
-  int client_socket = client_user->socket;
+bool handle_communication(int client_socket, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
+  int user_id = 0;
+  for (user_id; user_id < MAX_CLIENTS; user_id++) {
+    if (current_users[user_id]->socket == client_socket) break;
+  }
+  User* client_user = current_users[user_id];
   int msg_code = server_receive_id(client_socket);
   // char* client_message = malloc(255);
   char* client_message = server_receive_payload(client_socket);
   printf("El cliente %d dice: %s\n", client_socket, client_message);
   char response[500];
   strcpy(response, "");
-  // Si el usuario no tiene nombre, entonces este era el mensaje preguntandole por el nombre
+  if (strcmp(client_message, "exit")==0) {
+    client_user->status = "offline";
+    return true;
+  }
+  // Si el usuario no tiene nombre, entonces este es el mensaje preguntandole por el nombre
   // Entonces se lo asignamos y le mostramos el lobby. 
   if (client_user->name==NULL) {
-    if (!username_available(client_message, current_users, MAX_CLIENTS)) {
-      strcat(response, "El nombre de usuario ya está en uso, por favor elija otro.");
+    User* old_user = check_username(client_message, current_users, MAX_CLIENTS);
+    if (old_user != NULL) {
+      if (strcmp(old_user->status, "offline")!=0) {
+        strcat(response, "El nombre de usuario ya está en uso, por favor elija otro.");
+      } else {
+        current_users[client_user->id] = NULL;
+        client_user->id = old_user->id;
+        client_user->name = old_user->name;
+        client_user->phase = old_user->phase;
+        current_users[old_user->id] = client_user;
+        free(old_user);
+        strcat(response, reconnect_msg(client_user, current_users, rooms_list, MAX_CLIENTS));
+      }
     } else {
       strcat(response, "Bienvenido al lobby\n\n");
       client_user->name = client_message;
@@ -103,6 +122,7 @@ void handle_communication(User* client_user, User** current_users, Room** rooms_
   }
   // Le enviamos la respuesta
   server_send_message(client_socket, 1, response);
+  return false;
 }
 
 char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
@@ -143,19 +163,28 @@ char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   return lobby;
 }
 
-bool username_available(char* username, User** current_users, int MAX_CLIENTS) {
-  for (int i = 0; i < MAX_CLIENTS + 5; i++) {
+User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
+  for (int i = 0; i < MAX_CLIENTS; i++) {
     if (current_users[i] != NULL && current_users[i]->name != NULL) {
       if (strcmp(current_users[i]->name, username)==0) {
-        return false;
+        return current_users[i];
       }
     }
   }
-  return true;
+  return NULL;
+}
+
+char* reconnect_msg(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
+  char* response = malloc(500);
+  strcpy(response, "Bienvenido de vuelta, ");
+  strcat(response, client_user->name);
+  strcat(response, "\n\n");
+  strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+  return response;
 }
 
 void free_memory(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
-  for (int i = 0; i < MAX_CLIENTS + 5; i++) {
+  for (int i = 0; i < MAX_CLIENTS; i++) {
     if (current_users[i] != NULL) {
       free(current_users[i]);
     }

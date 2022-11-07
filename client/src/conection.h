@@ -14,3 +14,5 @@
 #include "comunication.h"
 
 int prepare_socket(char * IP, int PORT);
+void signal_callback_handler(int signum);
+int server_socket;

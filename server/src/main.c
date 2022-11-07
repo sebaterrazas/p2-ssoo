@@ -32,9 +32,9 @@ int main(int argc, char *argv[]){
   FD_ZERO(&current_sockets);
   FD_SET(server_socket, &current_sockets);
 
-  User** current_users = calloc(MAX_CLIENTS+5, sizeof(User*));
+  User** current_users = calloc(MAX_CLIENTS, sizeof(User*));
   // Se inicializa la lista con valores NULL
-  for (int i = 0; i < MAX_CLIENTS+5; i++) {
+  for (int i = 0; i < MAX_CLIENTS; i++) {
     current_users[i] = NULL;
   }
 
@@ -63,7 +63,13 @@ int main(int argc, char *argv[]){
         if (i == server_socket) {
           // Se acepta una nueva conexión
           int client_socket = accept_new_connection(server_socket);
-          if (client_socket >= MAX_CLIENTS + 5) {
+          int num_users;
+          for (num_users = 0; num_users < MAX_CLIENTS; num_users++) {
+            if (current_users[num_users] == NULL) {
+              break;
+            }
+          }
+          if (num_users >= MAX_CLIENTS) {
             server_send_message(client_socket, 1, "Servidor lleno");
             continue;
           }
@@ -72,12 +78,20 @@ int main(int argc, char *argv[]){
           client_user->socket = client_socket;
           client_user->name = NULL;
           client_user->phase = "login";
-          current_users[client_socket] = client_user;
+          client_user->status = "online";
+          int user_id;
+          for (user_id = 0; user_id < MAX_CLIENTS; user_id++) {
+            if (current_users[user_id] == NULL) {
+              break;
+            }
+          }
+          client_user->id = user_id;
+          current_users[user_id] = client_user;
           FD_SET(client_socket, &current_sockets);
         } else {
           // Se maneja una conexión existente
-          handle_communication(current_users[i], current_users, rooms_list, MAX_CLIENTS);
-          // FD_CLR(i, &current_sockets);
+          bool exit = handle_communication(i, current_users, rooms_list, MAX_CLIENTS);
+          if (exit) FD_CLR(i, &current_sockets);
         }
       }
     }

@@ -17,3 +17,9 @@ int prepare_socket(char * IP, int PORT){
   
   return client_socket;
 }
+
+void signal_callback_handler(int signum) {
+   client_send_message(server_socket, 1, "exit");
+   // Terminate program
+   exit(signum);
+}
