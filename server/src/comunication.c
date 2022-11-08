@@ -127,6 +127,28 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   else if (strcmp(client_message, "")==0 && strcmp(client_user->phase, "lobby")==0) {
     strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
   }
+  else if (client_user->phase == "lobby") {
+    if (stoi(client_message)){
+      int room_id = stoi(client_message);
+      if(room_id > 0 && room_id <= MAX_CLIENTS/2){
+        Room* room = rooms_list[room_id];
+        if(room->client1 != NULL && room->client2 != NULL){
+          strcat(response, "La sala %s está llena\n", room_id);
+        }
+        else if (room->client1 == NULL) {
+          room->client1 = client_user;
+          client_user->phase = "room";
+          client_user->room = room;
+          strcat(response, "Te uniste a la sala %s\n", room_id);
+        } else {
+          room->client2 = client_user;
+          client_user->phase = "room";
+          client_user->room = room;
+          strcat(response, "Te uniste a la sala %s\n", room_id);
+        }
+      }
+    }
+  }
   // Le enviamos la respuesta
   server_send_message(client_socket, 1, response);
   return false;
@@ -168,6 +190,22 @@ char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   }
   strcat(lobby, "\nApreta un número para unirte a esa sala, o\napreta Enter para actualizar el lobby.");
   return lobby;
+}
+
+void join_room(User* client_user, Room** rooms_list, int room_id) {
+  Room* room = rooms_list[room_id];
+  if (room == NULL) {
+    room = malloc(sizeof(Room));
+    room->room_id = room_id;
+    room->occupied_by = 1;
+    room->players[0] = client_user;
+    rooms_list[room_id] = room;
+  } else {
+    room->occupied_by = 2;
+    room->players[1] = client_user;
+  }
+  client_user->phase = "room";
+  client_user->room = room;
 }
 
 User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
