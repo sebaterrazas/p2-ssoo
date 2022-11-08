@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <ctype.h>
 #pragma once
 
 typedef struct user {
@@ -23,7 +24,7 @@ typedef struct room {
     bool p2_ready;
 } Room;
 
-
+bool isNumber(char *str);
 int server_receive_id(int client_socket);
 char * server_receive_payload(int client_socket);
 void server_send_message(int client_socket, int pkg_id, char * message);
