@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <ctype.h>
 #pragma once
 
 typedef struct user {

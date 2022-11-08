@@ -89,7 +89,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
 
   char response[500];
   strcpy(response, "");
-  if (strcmp(client_message, "exit")==0) {
+  if (strcmp(client_message, "exit")==0) { 
     client_user->status = "offline";
     // Le enviamos la respuesta
     server_send_message(client_socket, 1, "¡Hasta luego!");
@@ -127,6 +127,65 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   else if (strcmp(client_message, "")==0 && strcmp(client_user->phase, "lobby")==0) {
     strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
   }
+  ///Tratar de entrar a sala
+  else if (strcmp(client_user->phase, "lobby")==0) {
+    // Ver qué el mensaje del cliente sea un número de sala
+    bool valido = false;
+    int room_id;
+    if (isdigit(client_message) == 1){
+      room_id = atoi(client_message);
+      for (int i = 0; i < MAX_CLIENTS/2; i++){
+        if (i == room_id){
+          valido = true;
+        }
+      }
+    }
+    if (valido) {
+      Room* room = rooms_list[room_id];
+      if (room != NULL) {
+        // Si la sala está llena, entonces no se puede entrar
+        if (room->client1 && room->client2) {
+          strcat(response, "La sala está llena, por favor elija otra.");
+        } else {
+          if (room->client1 == NULL) {
+            room->client1 = client_user;
+          } else {
+            room->client2 = client_user;
+          }
+          client_user->phase = "room";
+          client_user->room = room;
+          // mensaje "Bienvenido a la sala {room_id}"
+          strcat(response, "Bienvenido a la sala ");
+          char room_id_str[10];
+          sprintf(room_id_str, "%d", room_id);
+          strcat(response, room_id_str);
+          strcat(response, room->client1->name);
+        }
+        if (room->client1 && room->client2) {
+          // Hay clientes suficientes para empezar la partida
+          // Se envía el opcion de empezar partida
+          strcat(response, "Escriba 'ready' para decir que está listo para empezar la partida.");
+        }
+      }
+    }
+  }
+  else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "ready")==0){
+    Room* room = client_user->room;
+    if (room->client1 == client_user) {
+      room->p1_ready = true;
+    } else {
+      room->p2_ready = true;
+    }
+    //Despues ver si imprime al otro jugador status de sala (yo ready)
+    if ((room->p1_ready && !room->p2_ready) || (!room->p1_ready && room->p2_ready)) {
+      strcat(response, "Esperando al otro jugador\n");
+    }
+    if (room->p1_ready && room->p2_ready){
+      strcat(response, start_game(room));
+    }
+  }
+  
+  ////////////////////////////////
   // Le enviamos la respuesta
   server_send_message(client_socket, 1, response);
   return false;
@@ -168,6 +227,16 @@ char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   }
   strcat(lobby, "\nApreta un número para unirte a esa sala, o\napreta Enter para actualizar el lobby.");
   return lobby;
+}
+
+// TODO
+char* start_game(Room* room) {
+  char* game = malloc(500);
+  strcpy(game, "Comienza la partida\n");
+  strcat(game, "Turno de ");
+  strcat(game, room->client1->name);
+  strcat(game, "\n");
+  return game;
 }
 
 User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
