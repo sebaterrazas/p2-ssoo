@@ -3,14 +3,24 @@
 
 ## Integrantes
 
--   Benjamín González - 17626730
--   Vicente Gavilán - 15623513
--   Tatsuya Yamaguchi - 16637941
 -   Isidora Becker - 18640737
+-   Vicente Gavilán - 15623513
+-   Benjamín González - 17626730
 -   Fernanda Reyes - 18639860
 -   Sebastián Terrazas - 20638078
+-   Tatsuya Yamaguchi - 16637941
+
+
+## Ejecución
+
+Para poder ejecutar el juego se debe correr los siguientes comandos desde la terminal tanto del cliente como del servidor:
+
+./server -i <ip_address> -p <tcp_port>
+./client -i <ip_adress> -p <tcp_port>
 
 ## Descripción
+
+Para la lógica del juego se realizarón una serie de funciones para poder implementar los requerimientos necesarios para la ejecución de este.
 
 ## Bonus
 
