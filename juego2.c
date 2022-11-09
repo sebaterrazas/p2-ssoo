@@ -106,6 +106,30 @@ bool validar_coordenadas(bool horizontal, int barco, int x, int y)
     return true;
 }
 
+// // retorna [tamaño, horizontal, x1, y1, x2, y2, x3, y3, x4, y4]
+// int* colocar_barco(bool horizontal, int barco, int x, int y)
+// {
+//     int* coordenadas = (int*)malloc(2 + (barco * 2 * sizeof(int)));
+//     coordenadas[0] = barco;
+//     coordenadas[1] = horizontal;
+//     if (horizontal)
+//     {
+//         for (int i = x; i < x + barco; i++)
+//         {
+//             jugador[y][i] = 1;
+//             coordenadas[2 + (i - x) * 2] = 1;
+//         }
+//     }
+//     else
+//     {
+//         for (int i = y; i < y + barco; i++)
+//         {
+//             jugador[i][x] = 1;
+//             coordenadas[2 + (i - y) * 2] = 1;
+//         }
+//     }
+//     return coordenadas;
+// }
 void colocar_barco(bool horizontal, int barco, int x, int y)
 {
     if (horizontal)
@@ -166,7 +190,7 @@ void pedir_coordenadas(int barco)
     }
     // transformar coordenada y a int
     y = coordenada_y - '0';
-    if (orientacion == 1) horizontal = true;
+    if (strcmp(&orientacion, "1") == 0) horizontal = true;
     else horizontal = false;
     y--;
     while (!validar_coordenadas(horizontal, barco, x, y))
@@ -208,7 +232,7 @@ void pedir_coordenadas(int barco)
             scanf("%d", &y);
         }
         y = coordenada_y - '0';
-        if (horizontal == 1) horizontal = true;
+        if (strcmp(&orientacion, "1") == 0) horizontal = true;
         else horizontal = false;
         y--;
     }
@@ -216,39 +240,59 @@ void pedir_coordenadas(int barco)
 
 bool pedir_disparo()
 {
-    printf("\t Elige las coordenadas donde disparar a tu oponente\n");
-    printf("\t Escoge la coordenada x: ");
-    scanf("%d", &x);
-    printf("\t Escoge la coordenada y: ");
-    scanf("%d", &y);
-    x--;
-    y--;
-    while (x < 0 || x > ANCHO || y < 0 || y > ALTO)
+    printf("  Elige las coordenadas donde disparar a tu oponente\n");
+    printf("    Escoge la coordenada x: ");
+    scanf(" %c", &coordenada_x);
+    while (coordenada_x != 'A' && coordenada_x != 'a' &&
+           coordenada_x != 'B' && coordenada_x != 'b' &&
+           coordenada_x != 'C' && coordenada_x != 'c' && 
+           coordenada_x != 'D' && coordenada_x != 'd' && 
+           coordenada_x != 'E' && coordenada_x != 'e')
     {
-        printf("\t Coordenadas no válidas, escoge otra vez\n");
-        printf("\t Escoge la coordenada x: ");
-        scanf("%d", &x);
-        printf("\t Escoge la coordenada y: ");
-        scanf("%d", &y);
-        x--;
-        y--;
+        printf("Coordenada no válida, intenta de nuevo: \n");
+        printf("  Escoge la coordenada x: \n");
+        scanf(" %c", &coordenada_x);
     }
+    if (coordenada_x == 'A' || coordenada_x == 'a') x = 0;
+    if (coordenada_x == 'B' || coordenada_x == 'b') x = 1;
+    if (coordenada_x == 'C' || coordenada_x == 'c') x = 2;
+    if (coordenada_x == 'D' || coordenada_x == 'd') x = 3;
+    if (coordenada_x == 'E' || coordenada_x == 'e') x = 4;
+    printf("    Escoge la coordenada y: ");
+    scanf(" %c", &coordenada_y);
+    while ((strcmp(&coordenada_y, "1") != 0) &&
+           (strcmp(&coordenada_y, "2") != 0) && 
+           (strcmp(&coordenada_y, "3") != 0) && 
+           (strcmp(&coordenada_y, "4") != 0) && 
+           (strcmp(&coordenada_y, "5") != 0))
+    {
+        printf("Coordenada no válida, ingrese nuevamente: \n");
+        printf("  Escoge la coordenada y: \n");
+        scanf(" %c", &coordenada_y);
+    }
+    y = coordenada_y - '0';
+    y--;
     if (oponente[y][x] == 0)
     {
         oponente[y][x] = 3;
-        printf("\t ¡Has fallado!\n");
+        printf("\n\n\t¡Has fallado!\n");
         return false;
     }
     else if (oponente[y][x] == 1)
     {
         oponente[y][x] = 2;
         puntaje_jugador++;
-        printf("\t ¡Has acertado!\n");
+        printf("\n\n\t¡Has acertado!\n");
         return true;
     }
     else if (oponente[y][x] == 2)
     {
-        printf("\t ¡Ya habías acertado en esa coordenada!\n");
+        printf("\n\n\t¡Ya habías acertado en esa coordenada!\n");
+        return false;
+    }
+    else if (oponente[y][x] == 3)
+    {
+        printf("\n\n\t¡Ya habías fallado en esa coordenada!\n");
         return false;
     }
     return false;
@@ -258,7 +302,7 @@ int main()
 {
     iniciar_tablero();
     mostrar_tablero();
-    for (int i = 4; i > 0; i--)
+    for (int i = 4; i > 1; i--)
     {
         pedir_coordenadas(i);
         colocar_barco(horizontal, i, x, y);
