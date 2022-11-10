@@ -96,6 +96,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   if (strcmp(client_message, "exit")==0) {
     client_user->status = "offline";
     // Le enviamos la respuesta
+    
     server_send_message(client_socket, 1, "¡Hasta luego!");
     return true;
   }
@@ -118,18 +119,24 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         client_user->status = "online";
         current_users[old_user->id] = client_user;
         free(old_user);
-        strcat(response, reconnect_msg(client_user, current_users, rooms_list, MAX_CLIENTS));
+        char* reconnect = reconnect_msg(client_user, current_users, rooms_list, MAX_CLIENTS);
+        strcat(response, reconnect);
+        free(reconnect);
       }
     } else {
       strcat(response, "Bienvenido al lobby\n\n");
       client_user->name = client_message;
       client_user->phase = "lobby";
-      strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+      char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
+      strcat(response, lobby);
+      free(lobby);
     }
   }
   // Si el usuario está en el lobby, y apretó enter (mensaje vacío) entonces quería actualizar el lobby
   else if (strcmp(client_message, "")==0 && strcmp(client_user->phase, "lobby")==0) {
-    strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+    char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
+    strcat(response, lobby);
+    free(lobby);
   }
   ///Tratar de entrar a sala
   else if (strcmp(client_user->phase, "lobby")==0) {
@@ -191,8 +198,12 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       {
         room->client1->phase = "choosing4";
         room->client2->phase = "choosing4";
-        strcpy(response, mostrar_tablero(client_user));
-        strcat(response, pedir_coordenadas(4));
+        char* tablero = mostrar_tablero(client_user);
+        strcpy(response, tablero);
+        free(tablero);
+        char* peticion = pedir_coordenadas(4);
+        strcat(response, peticion);
+        free(peticion);
       }
       else 
       {
@@ -222,7 +233,9 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     client_user->phase = "lobby";
     client_user->room = NULL;
     strcat(response, "Salió de la sala.\n");
-    strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+    char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
+    strcat(response, lobby);
+    free(lobby);
   }
   else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "ready")==0){
     Room* room = client_user->room;
@@ -238,8 +251,12 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     if (room->p1_ready && room->p2_ready){
       // mostrar el tablero
       // cambiar fase de los jugadores a "choosing"
-      strcat(response, mostrar_tablero(client_user));
-      strcat(response, pedir_coordenadas(4));
+      char* tablero = mostrar_tablero(client_user);
+      strcpy(response, tablero);
+      free(tablero);
+      char* peticion = pedir_coordenadas(4);
+      strcat(response, peticion);
+      free(peticion);
       room->client1->phase = "choosing4";
       room->client2->phase = "choosing4";
     }
@@ -254,8 +271,11 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     // mensaje[4] = numero "1", "2", "3", "4", "5"
     // Verificar
     if (strlen(client_message) == 0) {
-      strcat(response, mostrar_tablero(client_user));
-      strcat(response, pedir_coordenadas(4));
+      char* tablero = mostrar_tablero(client_user);
+      strcpy(response, tablero);
+      free(tablero);
+      char* peticion = pedir_coordenadas(4);
+      strcat(response, peticion);
     }
     else if (strlen(client_message) == 5) {
       char horizontal = client_message[0];
@@ -276,27 +296,43 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         if (validar_coordenadas(horizontal, 4, coordenada_x, coordenada_y, client_user))
         {
           client_user->phase = "choosing3";
-          strcat(response, mostrar_tablero(client_user));
-          strcat(response, pedir_coordenadas(3));
+          char* tablero = mostrar_tablero(client_user);
+          strcpy(response, tablero);
+          free(tablero);
+          char* peticion = pedir_coordenadas(3);
+          strcat(response, peticion);
+          free(peticion);
         }
         else
         {
-          strcat(response, mostrar_tablero(client_user));
+          char* tablero = mostrar_tablero(client_user);
+          strcpy(response, tablero);
+          free(tablero);
           strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-          strcat(response, pedir_coordenadas(4));
+          char* peticion = pedir_coordenadas(4);
+          strcat(response, peticion);
+          free(peticion);
         }
       }
       else
       {
-        strcat(response, mostrar_tablero(client_user));
+        char* tablero = mostrar_tablero(client_user);
+        strcpy(response, tablero);
+        free(tablero);
         strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-        strcat(response, pedir_coordenadas(4));
+        char* peticion = pedir_coordenadas(4);
+        strcat(response, peticion);
+        free(peticion);
       }
     }
     else {
-      strcat(response, mostrar_tablero(client_user));
+      char* tablero = mostrar_tablero(client_user);
+      strcpy(response, tablero);
+      free(tablero);
       strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-      strcat(response, pedir_coordenadas(4));
+      char* peticion = pedir_coordenadas(4);
+      strcat(response, peticion);
+      free(peticion);
     }
   }
   else if (strcmp(client_user->phase, "choosing3")==0) {
@@ -329,22 +365,34 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         if (validar_coordenadas(horizontal, 3, coordenada_x, coordenada_y, client_user))
         {
           client_user->phase = "choosing2";
-          strcat(response, mostrar_tablero(client_user));
-          strcat(response, pedir_coordenadas(2));
+          char* tablero = mostrar_tablero(client_user);
+          strcpy(response, tablero);
+          free(tablero);
+          char* peticion = pedir_coordenadas(2);
+          strcat(response, peticion);
+          free(peticion);
         }
         else
         {
-          strcat(response, mostrar_tablero(client_user));
+          char* tablero = mostrar_tablero(client_user);
+          strcpy(response, tablero);
+          free(tablero);
           strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-          strcat(response, pedir_coordenadas(3));
+          char* peticion = pedir_coordenadas(3);
+          strcat(response, peticion);
+          free(peticion);
         }
       }
     }
     else
     {
-      strcat(response, mostrar_tablero(client_user));
+      char* tablero = mostrar_tablero(client_user);
+      strcpy(response, tablero);
+      free(tablero);
       strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-      strcat(response, pedir_coordenadas(3));
+      char* peticion = pedir_coordenadas(3);
+      strcat(response, peticion);
+      free(peticion);
     }
   }
   else if (strcmp(client_user->phase, "choosing2")==0){
@@ -376,22 +424,34 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         if (validar_coordenadas(horizontal, 2, coordenada_x, coordenada_y, client_user))
         {
           client_user->phase = "confirm";
-          strcat(response, mostrar_tablero(client_user));
-          strcat(response, pedir_confirmacion());
+          char* tablero = mostrar_tablero(client_user);
+          strcpy(response, tablero);
+          free(tablero);
+          char* peticion = pedir_confirmacion();
+          strcat(response, peticion);
+          free(peticion);
         }
         else
         {
-          strcat(response, mostrar_tablero(client_user));
+          char* tablero = mostrar_tablero(client_user);
+          strcpy(response, tablero);
+          free(tablero);
           strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-          strcat(response, pedir_coordenadas(2));
+          char* peticion = pedir_coordenadas(2);
+          strcat(response, peticion);
+          free(peticion);
         }
       }
     }
     else
     {
-      strcat(response, mostrar_tablero(client_user));
+      char* tablero = mostrar_tablero(client_user);
+      strcpy(response, tablero);
+      free(tablero);
       strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
-      strcat(response, pedir_coordenadas(2));
+      char* peticion = pedir_coordenadas(2);
+      strcat(response, peticion);
+      free(peticion);
     }
   }
   else if (strcmp(client_user->phase, "confirm")==0){
@@ -433,8 +493,13 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           client_user->tablero_barcos[i][j] = 0;
         }
       }
-      strcpy(response, mostrar_tablero(client_user));
-      strcat(response, pedir_coordenadas(4));
+      char* tablero = mostrar_tablero(client_user);
+      strcpy(response, tablero);
+      free(tablero);
+      strcat(response, "Ingrese nuevamente las coordenadas de su barco de 4 casillas.");
+      char* peticion = pedir_coordenadas(4);
+      strcat(response, peticion);
+      free(peticion);
     }
     else
     {
@@ -480,12 +545,18 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         client_user->phase = "lose";
       }
     }
-    strcat(response, mostrar_tablero(client_user));
-    strcat(response, pedir_disparo(client_user));
+    char* tablero = mostrar_tablero(client_user);
+    strcpy(response, tablero);
+    free(tablero);
+    char* peticion = pedir_disparo(client_user);
+    strcat(response, peticion);
+    free(peticion);
     client_user->phase = "checking turn";
   }
   else if (strcmp(client_user->phase, "not on turn")==0){
-    strcat(response, mostrar_tablero(client_user));
+    char* tablero = mostrar_tablero(client_user);
+    strcpy(response, tablero);
+    free(tablero);
     strcat(response, "Esperando al otro jugador.");
   }
   else if (strcmp(client_user->phase, "checking turn")==0){
@@ -511,8 +582,12 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       {
         char coordenada_x = client_message[0];
         char coordenada_y = client_message[2];
-        strcpy(response, verificar_disparo(client_user, coordenada_x, coordenada_y));
-        strcat(response, mostrar_tablero(client_user));
+        char* verificar = verificar_disparo(client_user, coordenada_x, coordenada_y);
+        strcpy(response, verificar);
+        free(verificar);
+        char* tablero = mostrar_tablero(client_user);
+        strcat(response, tablero);
+        free(tablero);
         if (client_user->puntaje == 9)
         {
           strcat(response, "¡Has ganado!\n\n");
@@ -544,7 +619,9 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       if (strcmp(client_message, "s") == 0 || strcmp(client_message, "S") == 0)
       {
         client_user->phase = "lobby";
-        strcpy(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+        char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
+        strcpy(response, lobby);
+        free(lobby);
       }
       else if (strcmp(client_message, "n") == 0 || strcmp(client_message, "N") == 0)
       {
@@ -570,7 +647,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   server_send_message(client_socket, 1, response);
   return false;
 }
-char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
+char* mostrar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   char* lobby = malloc(500);
   strcpy(lobby, "Usuarios:\n");
   for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -625,7 +702,9 @@ char* reconnect_msg(User* client_user, User** current_users, Room** rooms_list, 
   strcpy(response, "Bienvenido de vuelta, ");
   strcat(response, client_user->name);
   strcat(response, "\n\n");
-  strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+  char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
+  strcat(response, lobby);
+  free(lobby);
   return response;
 }
 

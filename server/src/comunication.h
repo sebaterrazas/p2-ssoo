@@ -34,7 +34,7 @@ char * server_receive_payload(int client_socket);
 void server_send_message(int client_socket, int pkg_id, char * message);
 void server_send_image(int client_socket, int pkg_id, char * image_route);
 bool handle_communication(int client_socket, User** current_users, Room** rooms_list, int MAX_CLIENTS);
-char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS);
+char* mostrar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS);
 User* check_username(char* username, User** current_users, int MAX_CLIENTS);
 char* reconnect_msg(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS);
 void free_memory(User** current_users, Room** rooms_list, int MAX_CLIENTS);
