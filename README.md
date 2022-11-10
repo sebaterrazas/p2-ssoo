@@ -14,13 +14,10 @@
 ## Ejecución
 
 Para poder ejecutar el juego se debe correr los siguientes comandos desde la terminal tanto del cliente como del servidor:
-´´´
-./server -i 127.0.0.1 -p 8000
-´´´
 
-´´´
+./server -i 127.0.0.1 -p 8000
+
 ./client -i 127.0.0.1 -p 8000
-´´´
 
 ## Uso del programa
 
