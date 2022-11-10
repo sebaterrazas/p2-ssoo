@@ -536,18 +536,20 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   else if (strcmp(client_user->phase, "on turn") == 0){
     if (client_user->room->client1 == client_user)
     {
-      if (client_user->room->client2->phase == "win")
+      if (client_user->room->client2->phase == "finish")
       {
         strcat(response, "¡Has perdido!\n\n");
-        client_user->phase = "lose";
+        client_user->phase = "finish";
+        strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
       }
     }
     else if (client_user->room->client2 == client_user)
     {
-      if (client_user->room->client1->phase == "win")
+      if (client_user->room->client1->phase == "finish")
       {
         strcat(response, "¡Has perdido!\n\n");
-        client_user->phase = "lose";
+        client_user->phase = "finish";
+        strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
       }
     }
     char* tablero = mostrar_tablero(client_user);
@@ -596,10 +598,9 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         if (client_user->puntaje == 9)
         {
           strcat(response, "¡Has ganado!\n\n");
+          strcat(response, "¿Quieres seguir jugando? (s/n)\n");
+          client_user->phase = "finish";
           server_send_image(client_user->socket, 0, "welldone.jpg");
-          client_user->phase = "win";
-          if (client_user == client_user->room->client1) client_user->room->client2->phase = "lose";
-          else client_user->phase = "lose";
         }
       }
     }
@@ -609,13 +610,6 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
       strcat(response, pedir_disparo(client_user));
     }
-  }
-  else if ((strcmp(client_user->phase, "win") == 0) || (strcmp(client_user->phase, "lose") == 0))
-  {
-    // preguntar si quiere seguir jugando
-    strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
-    client_user->room->client1->phase = "finish";
-    client_user->room->client2->phase = "finish";
   }
   else if (strcmp(client_user->phase, "finish") == 0)
   {
