@@ -155,6 +155,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           } else {
             room->client2 = client_user;
           }
+          room->occupied_by++;
           client_user->phase = "room";
           client_user->room = room;
           // mensaje "Bienvenido a la sala {room_id}"
