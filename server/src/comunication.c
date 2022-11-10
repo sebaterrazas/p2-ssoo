@@ -591,9 +591,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         if (client_user->puntaje == 9)
         {
           strcat(response, "¡Has ganado!\n\n");
-          // "../welldone.jpg" as char*
-          // char* filename = "../welldone.jpg";
-          // server_send_image(client_user->socket, 0, filename);
+          server_send_image(client_user->socket, 0, "welldone.jpg");
           client_user->phase = "win";
           if (client_user == client_user->room->client1) client_user->room->client2->phase = "lose";
           else client_user->phase = "lose";
