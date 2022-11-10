@@ -136,9 +136,11 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   else if (strcmp(client_message, "")==0 && strcmp(client_user->phase, "lobby")==0) {
     strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
   }
+  // Si el usuario ingreso un texto (esperemos que sea el numero de sala)
   else if (client_user->phase == "lobby") {
     if (isNumber(client_message)){
       int room_id = atoi(client_message);
+      // el numero de sala es valido
       if(room_id > 0 && room_id <= MAX_CLIENTS/2){
         Room* room = rooms_list[room_id];
         if(room->client1 != NULL && room->client2 != NULL){
