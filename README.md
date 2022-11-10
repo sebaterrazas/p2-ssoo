@@ -15,9 +15,9 @@
 
 Para poder ejecutar el juego se debe correr los siguientes comandos desde la terminal tanto del cliente como del servidor:
 
-./server -i <ip_address> -p <tcp_port>
+./server -i 127.0.0.1 -p 8000
 
-./client -i <ip_adress> -p <tcp_port>
+./client -i 127.0.0.1 -p 8000
 
 ## Descripción
 
