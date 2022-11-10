@@ -41,12 +41,11 @@ int main (int argc, char *argv[]){
     if (msg_code == 0) { //Recibimos una imagen
       message = client_receive_image(server_socket);
       printf("El servidor te ha enviado una imagen [%s]\n", message);
-    }
-    else {
-      message = client_receive_payload(server_socket);
+      msg_code = client_receive_id(server_socket);
     }
 
     if (msg_code == 1) { //Recibimos un mensaje de servidor 
+      message = client_receive_payload(server_socket);
       printf("%s\n", message);
     }
 

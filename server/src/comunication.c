@@ -87,10 +87,13 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   int msg_code = server_receive_id(client_socket);
   char* client_message = server_receive_payload(client_socket);
   printf("El cliente %d (%s) dice: %s\n", client_socket, client_user->phase, client_message);
+  char* filename = "welldone.jpg";
+
+  // server_send_image(client_socket, 0, filename);
 
   char response[1500];
   strcpy(response, "");
-  if (strcmp(client_message, "exit")==0) { 
+  if (strcmp(client_message, "exit")==0) {
     client_user->status = "offline";
     // Le enviamos la respuesta
     server_send_message(client_socket, 1, "¡Hasta luego!");
@@ -169,13 +172,11 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         }
         if (room->client1 && room->client2) {
           // Hay clientes suficientes para empezar la partida
-          // Se envía el opcion de empezar partida
           strcat(response, "Sala lista.\nEscriba 'ready' para decir que está listo para empezar la partida,\no 'salir' para salir de la sala.");
         }
         else
         {
           // No hay clientes suficientes para empezar la partida
-          // Se envía el mensaje de que se está esperando a otro jugador
           strcat(response, "Esperando a otro jugador...\nApreta Enter actualizar la sala,\no escribe 'salir' para salir de la sala.");
         }
       }
@@ -183,18 +184,32 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   }
   else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "")==0) {
     Room* room = client_user->room;
-    if (room->)
     if (room->client1 && room->client2) {
-      // Hay clientes suficientes para empezar la partida
-      // Se envía el opcion de empezar partida
-      strcat(response, "Sala lista.\nEscriba 'ready' para decir que está listo para empezar la partida,\no 'salir' para salir de la sala.");
+    // Hay clientes suficientes para empezar la partida
+    // Se envía el opcion de empezar partida
+      if (room->p1_ready && room->p2_ready)
+      {
+        room->client1->phase = "choosing4";
+        room->client2->phase = "choosing4";
+        strcpy(response, mostrar_tablero(client_user));
+        strcat(response, pedir_coordenadas(4));
+      }
+      else 
+      {
+        if (room->client1 == client_user)
+        {
+          if (room->p1_ready) strcpy(response, "Esperando a que el jugador 2 esté listo. Presione Enter para actualizar.");
+          else strcpy(response, "Escriba 'ready' para decir que está listo para empezar la partida,\no 'salir' para salir de la sala.");
+        }
+        else if (room->client2 == client_user)
+        {
+          if (room->p2_ready) strcpy(response, "Esperando a que el jugador 1 esté listo. Presione Enter para actualizar.");
+          else strcpy(response, "Escriba 'ready' para decir que está listo para empezar la partida,\no 'salir' para salir de la sala.");
+        }
+        else strcpy(response, "Algo raro");
+      }
     }
-    else
-    {
-      // No hay clientes suficientes para empezar la partida
-      // Se envía el mensaje de que se está esperando a otro jugador
-      strcat(response, "Esperando a otro jugador...\nApreta Enter actualizar la sala,\no escribe 'salir' para salir de la sala.");
-    }
+    else strcpy(response, "Esperando a otro jugador...\nApreta Enter actualizar la sala,\no escribe 'salir' para salir de la sala.");
   }
   else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "salir")==0) {
     Room* room = client_user->room;
@@ -380,7 +395,8 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     }
   }
   else if (strcmp(client_user->phase, "confirm")==0){
-    if (strcmp(client_message, "s") || strcmp(client_message, "S"))
+    //Si en CONFIRMAR respuesta si:
+    if (strcmp(client_message ,"s") == 0 || strcmp(client_message, "S") == 0)
     {
       client_user->phase = "waiting";
       if (client_user == client_user->room->client1)
@@ -391,13 +407,9 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           client_user->room->client2->phase = "not on turn";
           strcat(response, "Es tu turno, presiona enter para continuar.\n");
         }
-        else
-        {
-          // strcat(response, mostrar_tablero(client_user));
-          strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
-        }
+        else strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
       }
-      else 
+      else if (client_user == client_user->room->client2)
       {
         if (client_user->room->client1->phase == "waiting")
         {
@@ -405,23 +417,28 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           client_user->room->client1->phase = "on turn";
           strcat(response, "Es el turno de tu oponente. Apreta Enter para actualizar.");
         }
-        else
-        {
-          strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
-        }
+        else strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
       }
     }
-    else if (strcmp(client_message, "n") || strcmp(client_message, "N"))
+    //Si en CONFIRMAR respuesta no:
+    else if (strcmp(client_message, "n") == 0|| strcmp(client_message, "N") == 0)
     {
       client_user->phase = "choosing4";
-      strcat(response, mostrar_tablero(client_user));
+      // reiniciar coordenadas
+      for (int i = 0; i < 5; i++)
+      {
+        for (int j = 0; j < 5; j++)
+        {
+          client_user->tablero[i][j] = 0;
+          client_user->tablero_barcos[i][j] = 0;
+        }
+      }
+      strcpy(response, mostrar_tablero(client_user));
       strcat(response, pedir_coordenadas(4));
     }
     else
     {
       strcat(response, "Por favor elija una opción válida.\n");
-      strcat(response, mostrar_tablero(client_user));
-      strcat(response, pedir_coordenadas(2));
     }
   }
   else if (strcmp(client_user->phase, "waiting")==0){ // Cuando se quiere actualizar y se está esperando al oponente
@@ -433,11 +450,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         client_user->room->client2->phase = "not on turn";
         strcat(response, "Es tu turno, presiona enter para continuar.\n");
       }
-      else
-      {
-        // strcat(response, mostrar_tablero(client_user));
-        strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
-      }
+      else strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
     }
     else 
     {
@@ -447,13 +460,26 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         client_user->room->client1->phase = "on turn";
         strcat(response, "Es el turno de tu oponente. Apreta Enter para actualizar.");
       }
-      else
-      {
-        strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
-      }
+      else strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
     }
   }
-  else if (strcmp(client_user->phase, "on turn")==0){
+  else if (strcmp(client_user->phase, "on turn") == 0){
+    if (client_user->room->client1 == client_user)
+    {
+      if (client_user->room->client2->phase == "win")
+      {
+        strcat(response, "¡Has perdido!\n\n");
+        client_user->phase = "lose";
+      }
+    }
+    else if (client_user->room->client2 == client_user)
+    {
+      if (client_user->room->client1->phase == "win")
+      {
+        strcat(response, "¡Has perdido!\n\n");
+        client_user->phase = "lose";
+      }
+    }
     strcat(response, mostrar_tablero(client_user));
     strcat(response, pedir_disparo(client_user));
     client_user->phase = "checking turn";
@@ -485,26 +511,56 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       {
         char coordenada_x = client_message[0];
         char coordenada_y = client_message[2];
-        strcat(response, verificar_disparo(client_user, coordenada_x, coordenada_y));
+        strcpy(response, verificar_disparo(client_user, coordenada_x, coordenada_y));
         strcat(response, mostrar_tablero(client_user));
-        if (client_user->puntaje == 10)
+        if (client_user->puntaje == 9)
         {
           strcat(response, "¡Has ganado!\n\n");
+          // "../welldone.jpg" as char*
+          // char* filename = "../welldone.jpg";
+          // server_send_image(client_user->socket, 0, filename);
           client_user->phase = "win";
           if (client_user == client_user->room->client1) client_user->room->client2->phase = "lose";
           else client_user->phase = "lose";
         }
-        else
-        {
-          client_user->phase = "not on turn";
-          if (client_user == client_user->room->client1) client_user->room->client2->phase = "on turn";
-          else client_user->phase = "on turn";
-        }
+      }
+    }
+    else if ((strcmp(client_user->phase, "win") == 0) || (strcmp(client_user->phase, "lose") == 0))
+    {
+      // preguntar si quiere seguir jugando
+      strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
+      client_user->room->client1->phase = "finish";
+      client_user->room->client2->phase = "finish";
+    }
+    else if (strcmp(client_user->phase, "finish") == 0)
+    {
+      client_user->room->occupied_by = 0;
+      client_user->room->p1_ready = false;
+      client_user->room->p2_ready = false;
+      if (client_user->room->client1 == client_user) client_user->room->client1 = NULL;
+      else client_user->room->client2 = NULL;
+      client_user->room = NULL;
+      client_user->puntaje = 0;
+      if (strcmp(client_message, "s") == 0 || strcmp(client_message, "S") == 0)
+      {
+        client_user->phase = "lobby";
+        strcpy(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
+      }
+      else if (strcmp(client_message, "n") == 0 || strcmp(client_message, "N") == 0)
+      {
+        client_user->phase = "finish";        
+        client_user->status = "offline";
+        server_send_message(client_socket, 1, "Gracias por jugar.\n\n¡Hasta luego!");
+        return true;
+      }
+      else
+      {
+        strcat(response, "Por favor elija una opción válida.\n");
       }
     }
     else
     {
-      strcat(response, mostrar_tablero(client_user));
+      strcpy(response, mostrar_tablero(client_user));
       strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
       strcat(response, pedir_disparo(client_user));
     }
@@ -514,7 +570,6 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   server_send_message(client_socket, 1, response);
   return false;
 }
-
 char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   char* lobby = malloc(500);
   strcpy(lobby, "Usuarios:\n");

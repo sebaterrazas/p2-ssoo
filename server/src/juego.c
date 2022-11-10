@@ -192,6 +192,8 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
         {
             user->room->client2->tablero[y][x] = 3;
             strcat(resultado, "\n\n ¡Has fallado!\n\n");
+            user->phase = "not on turn";
+            user->room->client2->phase = "on turn";
         }
         else if (user->room->client2->tablero[y][x] == 1)
         {
@@ -202,7 +204,9 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
             if (user->room->client2->barcos[user->room->client2->tablero_barcos[y][x] - 2] == 0)
             {
                 strcat(resultado, "\n\n¡Has hundido un barco!\n\n\n");
-            }
+            };
+            user->phase = "not on turn";
+            user->room->client2->phase = "on turn";
         }
         else if (user->room->client2->tablero[y][x] == 2)
         {
@@ -219,6 +223,8 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
         {
             user->room->client1->tablero[y][x] = 3;
             strcat(resultado, "\n\n ¡Has fallado!\n\n");
+            user->phase = "not on turn";
+            user->room->client1->phase = "on turn";
         }
         else if (user->room->client1->tablero[y][x] == 1)
         {
@@ -230,6 +236,8 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
             {
                 strcat(resultado, "¡Has hundido un barco!\n\n");
             }
+            user->phase = "not on turn";
+            user->room->client1->phase = "on turn";
         }
         else if (user->room->client1->tablero[y][x] == 2)
         {
