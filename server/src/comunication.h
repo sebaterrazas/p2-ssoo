@@ -15,7 +15,7 @@ typedef struct user {
     struct room *room;
     int** tablero;
     int** tablero_barcos;
-    int barcos[3];
+    int* barcos;
     int puntaje;
 } User;
 

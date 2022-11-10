@@ -86,9 +86,9 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   User* client_user = current_users[user_id];
   int msg_code = server_receive_id(client_socket);
   char* client_message = server_receive_payload(client_socket);
-  printf("El cliente %d dice: %s\n", client_socket, client_message);
+  printf("El cliente %d (%s) dice: %s\n", client_socket, client_user->phase, client_message);
 
-  char response[500];
+  char response[1500];
   strcpy(response, "");
   if (strcmp(client_message, "exit")==0) { 
     client_user->status = "offline";
@@ -158,28 +158,55 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           room->occupied_by++;
           client_user->phase = "room";
           client_user->room = room;
-          // mensaje "Bienvenido a la sala {room_id}"
+          // mensaje "Bienvenido a la sala {room_id} {nombre_cliente}"
           strcat(response, "Bienvenido a la sala ");
           char room_id_str[10];
           sprintf(room_id_str, "%d", room_id);
           strcat(response, room_id_str);
           strcat(response, " ");
-          strcat(response, room->client1->name);
+          strcat(response, client_user->name);
           strcat(response, "\n");
         }
         if (room->client1 && room->client2) {
           // Hay clientes suficientes para empezar la partida
           // Se envía el opcion de empezar partida
-          strcat(response, "Escriba 'ready' para decir que está listo para empezar la partida.");
+          strcat(response, "Partida llena.\nEscriba 'ready' para decir que está listo para empezar la partida,\no 'salir' para salir de la sala.");
         }
         else
         {
           // No hay clientes suficientes para empezar la partida
           // Se envía el mensaje de que se está esperando a otro jugador
-          strcat(response, "Esperando a otro jugador...");
+          strcat(response, "Esperando a otro jugador...\nApreta Enter actualizar la sala,\no escribe 'salir' para salir de la sala.");
         }
       }
     }
+  }
+  else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "")==0) {
+    Room* room = client_user->room;
+    if (room->client1 && room->client2) {
+      // Hay clientes suficientes para empezar la partida
+      // Se envía el opcion de empezar partida
+      strcat(response, "Partida llena.\nEscriba 'ready' para decir que está listo para empezar la partida,\no 'salir' para salir de la sala.");
+    }
+    else
+    {
+      // No hay clientes suficientes para empezar la partida
+      // Se envía el mensaje de que se está esperando a otro jugador
+      strcat(response, "Esperando a otro jugador...\nApreta Enter actualizar la sala,\no escribe 'salir' para salir de la sala.");
+    }
+  }
+  else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "salir")==0) {
+    Room* room = client_user->room;
+    if (room->client1 == client_user) {
+      room->client1 = NULL;
+    } else {
+      room->client2 = NULL;
+    }
+    room->occupied_by--;
+    client_user->phase = "lobby";
+    client_user->room = NULL;
+    strcat(response, "Salió de la sala.\n");
+    strcat(response, mostar_lobby(current_users, rooms_list, MAX_CLIENTS));
   }
   else if (strcmp(client_user->phase, "room")==0 && strcmp(client_message, "ready")==0){
     Room* room = client_user->room;
@@ -190,7 +217,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     }
     //Despues ver si imprime al otro jugador status de sala (yo ready)
     if ((room->p1_ready && !room->p2_ready) || (!room->p1_ready && room->p2_ready)) {
-      strcat(response, "Esperando al otro jugador\n");
+      strcat(response, "Esperando al otro jugador...");
     }
     if (room->p1_ready && room->p2_ready){
       // mostrar el tablero
@@ -201,8 +228,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       room->client2->phase = "choosing4";
     }
   }
-  else if (strcmp(client_user->phase, "choosing4"))
-  {
+  else if (strcmp(client_user->phase, "choosing4")==0) {
     // verificar calidad del mensaje
     // largo del mensaje = 5
     // mensaje[0] = 1 o 2
@@ -217,16 +243,16 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       char coordenada_x = client_message[2];
       char coordenada_y = client_message[4];
       if(
-        (strcmp(&horizontal, "1") == 0 ||
-         strcmp(&horizontal, "2") == 0) &&
-        (strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
-         strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
-         strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
-         strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
-         strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
-        (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
-         strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
-         strcmp(&coordenada_y, "5") == 0))
+        (horizontal == '1' ||
+         horizontal == '2') &&
+        (coordenada_x == 'A' || coordenada_x == 'a' ||
+         coordenada_x == 'B' || coordenada_x == 'b' ||
+         coordenada_x == 'C' || coordenada_x == 'c' ||
+         coordenada_x == 'D' || coordenada_x == 'd' ||
+         coordenada_x == 'E' || coordenada_x == 'e') &&
+        (coordenada_y == '1' || coordenada_y == '2' ||
+         coordenada_y == '3' || coordenada_y == '4' ||
+         coordenada_y == '5'))
       {
         if (validar_coordenadas(horizontal, 4, coordenada_x, coordenada_y, client_user))
         {
@@ -241,6 +267,12 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           strcat(response, pedir_coordenadas(4));
         }
       }
+      else
+      {
+        strcat(response, mostrar_tablero(client_user));
+        strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+        strcat(response, pedir_coordenadas(4));
+      }
     }
     else
     {
@@ -249,8 +281,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, pedir_coordenadas(4));
     }
   }
-  else if (strcmp(client_user->phase, "choosing3"))
-  {
+  else if (strcmp(client_user->phase, "choosing3")==0) {
     // verificar calidad del mensaje
     // largo del mensaje = 5
     // mensaje[0] = 1 o 2
@@ -265,16 +296,16 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       char coordenada_x = client_message[2];
       char coordenada_y = client_message[4];
       if (
-        (strcmp(&horizontal, "1") == 0 ||
-         strcmp(&horizontal, "2") == 0) &&
-        (strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
-         strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
-         strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
-         strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
-         strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
-        (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
-         strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
-         strcmp(&coordenada_y, "5") == 0))
+        (horizontal == '1' ||
+         horizontal == '2') &&
+        (coordenada_x == 'A' || coordenada_x == 'a' ||
+         coordenada_x == 'B' || coordenada_x == 'b' ||
+         coordenada_x == 'C' || coordenada_x == 'c' ||
+         coordenada_x == 'D' || coordenada_x == 'd' ||
+         coordenada_x == 'E' || coordenada_x == 'e') &&
+        (coordenada_y == '1' || coordenada_y == '2' ||
+         coordenada_y == '3' || coordenada_y == '4' ||
+         coordenada_y == '5'))
       {
 
         if (validar_coordenadas(horizontal, 3, coordenada_x, coordenada_y, client_user))
@@ -298,8 +329,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, pedir_coordenadas(3));
     }
   }
-  else if (strcmp(client_user->phase, "choosing2"))
-  {
+  else if (strcmp(client_user->phase, "choosing2")==0){
     // verificar calidad del mensaje
     // largo del mensaje = 5
     // mensaje[0] = 1 o 2
@@ -313,17 +343,17 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       char horizontal = client_message[0];
       char coordenada_x = client_message[2];
       char coordenada_y = client_message[4];
-      if(
-        (strcmp(&horizontal, "1") == 0 ||
-         strcmp(&horizontal, "2") == 0) &&
-        (strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
-         strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
-         strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
-         strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
-         strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
-        (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
-         strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
-         strcmp(&coordenada_y, "5") == 0))
+      if (
+        (horizontal == '1' ||
+         horizontal == '2') &&
+        (coordenada_x == 'A' || coordenada_x == 'a' ||
+         coordenada_x == 'B' || coordenada_x == 'b' ||
+         coordenada_x == 'C' || coordenada_x == 'c' ||
+         coordenada_x == 'D' || coordenada_x == 'd' ||
+         coordenada_x == 'E' || coordenada_x == 'e') &&
+        (coordenada_y == '1' || coordenada_y == '2' ||
+         coordenada_y == '3' || coordenada_y == '4' ||
+         coordenada_y == '5'))
       {
         if (validar_coordenadas(horizontal, 2, coordenada_x, coordenada_y, client_user))
         {
@@ -346,8 +376,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, pedir_coordenadas(2));
     }
   }
-  else if (strcmp(client_user->phase, "confirm"))
-  {
+  else if (strcmp(client_user->phase, "confirm")==0){
     if (strcmp(client_message, "s") || strcmp(client_message, "S"))
     {
       client_user->phase = "waiting";
@@ -383,19 +412,16 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, pedir_coordenadas(2));
     }
   }
-  else if (strcmp(client_user->phase, "on turn"))
-  {
+  else if (strcmp(client_user->phase, "on turn")==0){
     strcat(response, mostrar_tablero(client_user));
     strcat(response, pedir_disparo(client_user));
     client_user->phase = "checking turn";
   }
-  else if (strcmp(client_user->phase, "not on turn"))
-  {
+  else if (strcmp(client_user->phase, "not on turn")==0){
     strcat(response, mostrar_tablero(client_user));
     strcat(response, "Esperando al otro jugador.");
   }
-  else if (strcmp(client_user->phase, "checking turn"))
-  {
+  else if (strcmp(client_user->phase, "checking turn")==0){
     // verificar mensaje
     // largo del mensaje = 3
     // mensaje[0] = letra "A", "a", "B", "b", "C", "c", "D", "d", "E", "e"
@@ -406,14 +432,15 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     {
       char coordenada_x = client_message[0];
       char coordenada_y = client_message[2];
-      if ((strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
-          strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
-          strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
-          strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
-          strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
-         (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
-          strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
-          strcmp(&coordenada_y, "5") == 0))
+      if (
+        (coordenada_x == 'A' || coordenada_x == 'a' ||
+         coordenada_x == 'B' || coordenada_x == 'b' ||
+         coordenada_x == 'C' || coordenada_x == 'c' ||
+         coordenada_x == 'D' || coordenada_x == 'd' ||
+         coordenada_x == 'E' || coordenada_x == 'e') &&
+        (coordenada_y == '1' || coordenada_y == '2' ||
+         coordenada_y == '3' || coordenada_y == '4' ||
+         coordenada_y == '5'))
       {
         char coordenada_x = client_message[0];
         char coordenada_y = client_message[2];
@@ -441,7 +468,6 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, pedir_disparo(client_user));
     }
   }
-  
   ////////////////////////////////
   // Le enviamos la respuesta
   server_send_message(client_socket, 1, response);

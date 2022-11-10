@@ -1,27 +1,32 @@
 #include "comunication.h"
 
-// Variables
-bool horizontal;
-int ALTO = 5;
-int ANCHO = 5;
-char coordenada_x;
-char coordenada_y;
-int x;
-int y;
+
+extern int ANCHO; // declaration of global variable
+extern int ALTO; // declaration of global variable
+extern bool horizontal;
+extern char coordenada_x;
+extern char coordenada_y;
+extern int x;
+extern int y;
+
 
 // Imprimir tablero
 char* mostrar_tablero(User* user)
 {
     char* tablero = malloc(1000);
-    strcat(tablero, "\t\t\n");
+    strcpy(tablero, "\t\t\n");
     strcat(tablero, "\t\tBATALLA NAVAL\n\n");
     strcat(tablero, "\t     A  B  C  D  E\n");
     for (int i = 0; i < ALTO; i++)
     {
-        printf("\t");
+        strcat(tablero, "\t");
         for (int j = 0; j < ANCHO; j++)
         {
-            if (j == 0) printf(" %d ", i + 1);
+            if (j == 0) {
+                char i_str[10];
+                sprintf(i_str, " %d ", i + 1);
+                strcat(tablero, i_str);
+            }
             if (user->room->client1 == user)
             {
                 if (user->room->client2->tablero[i][j] == 2) strcat(tablero, "  X");
@@ -47,8 +52,8 @@ char* mostrar_tablero(User* user)
         {
             if (j == 0)
             {
-                char temp[2];
-                sprintf(temp, "%d", i + 1);
+                char temp[15];
+                sprintf(temp, " %d ", i + 1);
                 strcat(tablero, temp);
             }
             if (user->tablero[i][j] == 1) strcat(tablero, "  O");
@@ -107,6 +112,7 @@ void colocar_barco(bool horizontal, int barco, int x, int y, User* user)
             user->tablero_barcos[i][x] = barco;
         }
     }
+    // ???????
     user->barcos[barco - 1] = barco;
 }
 
@@ -144,10 +150,10 @@ bool validar_coordenadas(char horizontal1, int barco, char coordenada_x, char co
 char* pedir_coordenadas(int barco)
 {
     char* peticion = malloc(1000);
-    strcat(peticion, "\t\t\n");
+    strcpy(peticion, "\t\t\n");
     strcat(peticion, "  Escoge la orientación y posición de inicio de tu barco de largo ");
     // char largo = str(barco);
-    char largo[2];
+    char largo[15];
     sprintf(largo, "%d", barco);
     strcat(peticion, largo);
     strcat(peticion, "\n");
@@ -239,6 +245,6 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
 char* pedir_confirmacion()
 {
     char* peticion = malloc(26);
-    strcat(peticion, "  ¿Esta es tu flota? (s/n)\n");
+    strcpy(peticion, "  ¿Esta es tu flota? (s/n)\n");
     return peticion;
 }

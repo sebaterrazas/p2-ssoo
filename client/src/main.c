@@ -31,6 +31,7 @@ int main (int argc, char *argv[]){
 
   // Register signal and signal handler
   signal(SIGINT, signal_callback_handler);
+  // SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM
 
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
   while (1){

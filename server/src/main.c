@@ -4,6 +4,9 @@
 #include "comunication.h"
 #include "conection.h"
 
+extern int ANCHO; // declaration of global variable
+extern int ALTO; // declaration of global variable
+
 char * revert(char * message){
   //Se invierte el mensaje
   
@@ -46,6 +49,8 @@ int main(int argc, char *argv[]){
     room->client2 = NULL;
     room->room_id = i;
     room->occupied_by = 0;
+    room->p1_ready = false;
+    room->p2_ready = false;
     rooms_list[i] = room;
   }
 
@@ -87,6 +92,24 @@ int main(int argc, char *argv[]){
           }
           client_user->id = user_id;
           current_users[user_id] = client_user;
+          client_user->room = NULL;
+          client_user->tablero = calloc(ALTO, sizeof(int*));
+          for (int i = 0; i < ALTO; i++) {
+            client_user->tablero[i] = calloc(ANCHO, sizeof(int));
+          }
+          client_user->tablero_barcos = calloc(ALTO, sizeof(int*));
+          for (int i = 0; i < ALTO; i++) {
+            client_user->tablero_barcos[i] = calloc(ANCHO, sizeof(int));
+          }
+          // ?????
+          client_user->barcos = calloc(5, sizeof(int));
+          client_user->barcos[0] = 1;
+          client_user->barcos[1] = 2;
+          client_user->barcos[2] = 3;
+          client_user->barcos[3] = 4;
+          client_user->barcos[4] = 5;
+          client_user->puntaje = 0;
+
           FD_SET(client_socket, &current_sockets);
         } else {
           // Se maneja una conexión existente
