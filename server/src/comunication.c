@@ -598,46 +598,46 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         }
       }
     }
-    else if ((strcmp(client_user->phase, "win") == 0) || (strcmp(client_user->phase, "lose") == 0))
-    {
-      // preguntar si quiere seguir jugando
-      strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
-      client_user->room->client1->phase = "finish";
-      client_user->room->client2->phase = "finish";
-    }
-    else if (strcmp(client_user->phase, "finish") == 0)
-    {
-      client_user->room->occupied_by = 0;
-      client_user->room->p1_ready = false;
-      client_user->room->p2_ready = false;
-      if (client_user->room->client1 == client_user) client_user->room->client1 = NULL;
-      else client_user->room->client2 = NULL;
-      client_user->room = NULL;
-      client_user->puntaje = 0;
-      if (strcmp(client_message, "s") == 0 || strcmp(client_message, "S") == 0)
-      {
-        client_user->phase = "lobby";
-        char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
-        strcpy(response, lobby);
-        free(lobby);
-      }
-      else if (strcmp(client_message, "n") == 0 || strcmp(client_message, "N") == 0)
-      {
-        client_user->phase = "finish";        
-        client_user->status = "offline";
-        server_send_message(client_socket, 1, "Gracias por jugar.\n\n¡Hasta luego!");
-        return true;
-      }
-      else
-      {
-        strcat(response, "Por favor elija una opción válida.\n");
-      }
-    }
     else
     {
       strcpy(response, mostrar_tablero(client_user));
       strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
       strcat(response, pedir_disparo(client_user));
+    }
+  }
+  else if ((strcmp(client_user->phase, "win") == 0) || (strcmp(client_user->phase, "lose") == 0))
+  {
+    // preguntar si quiere seguir jugando
+    strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
+    client_user->room->client1->phase = "finish";
+    client_user->room->client2->phase = "finish";
+  }
+  else if (strcmp(client_user->phase, "finish") == 0)
+  {
+    client_user->room->occupied_by = 0;
+    client_user->room->p1_ready = false;
+    client_user->room->p2_ready = false;
+    if (client_user->room->client1 == client_user) client_user->room->client1 = NULL;
+    else client_user->room->client2 = NULL;
+    client_user->room = NULL;
+    client_user->puntaje = 0;
+    if (strcmp(client_message, "s") == 0 || strcmp(client_message, "S") == 0)
+    {
+      client_user->phase = "lobby";
+      char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
+      strcpy(response, lobby);
+      free(lobby);
+    }
+    else if (strcmp(client_message, "n") == 0 || strcmp(client_message, "N") == 0)
+    {
+      client_user->phase = "finish";        
+      client_user->status = "offline";
+      server_send_message(client_socket, 1, "Gracias por jugar.\n\n¡Hasta luego!");
+      return true;
+    }
+    else
+    {
+      strcat(response, "Por favor elija una opción válida.\n");
     }
   }
   ////////////////////////////////
@@ -696,7 +696,7 @@ User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
 
 char* reconnect_msg(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   char* response = malloc(500);
-  strcpy(response, "Bienvenido de vuelta, ");
+  strcpy(response, "Bienvenido de vuelta, apreta Enter para continuar.\n");
   strcat(response, client_user->name);
   strcat(response, "\n\n");
   char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
