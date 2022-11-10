@@ -1,4 +1,5 @@
 #include "comunication.h"
+#include "juego.h"
 
 //LINKS REFERENCIAS
 //https://pubs.opengroup.org/onlinepubs/009695399/functions/recv.html
@@ -132,12 +133,14 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     // Ver qué el mensaje del cliente sea un número de sala
     bool valido = false;
     int room_id;
-    if (isdigit(client_message) == 1){
-      room_id = atoi(client_message);
-      for (int i = 0; i < MAX_CLIENTS/2; i++){
-        if (i == room_id){
-          valido = true;
-        }
+    for (int i = 0; i < MAX_CLIENTS/2; i++)
+    {
+      char i_str[10];
+      sprintf(i_str, "%d", i);
+      if (strcmp(client_message, i_str)==0) {
+        valido = true;
+        room_id = i;
+        break;
       }
     }
     if (valido) {
@@ -159,12 +162,20 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
           char room_id_str[10];
           sprintf(room_id_str, "%d", room_id);
           strcat(response, room_id_str);
+          strcat(response, " ");
           strcat(response, room->client1->name);
+          strcat(response, "\n");
         }
         if (room->client1 && room->client2) {
           // Hay clientes suficientes para empezar la partida
           // Se envía el opcion de empezar partida
           strcat(response, "Escriba 'ready' para decir que está listo para empezar la partida.");
+        }
+        else
+        {
+          // No hay clientes suficientes para empezar la partida
+          // Se envía el mensaje de que se está esperando a otro jugador
+          strcat(response, "Esperando a otro jugador...");
         }
       }
     }
@@ -181,7 +192,252 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, "Esperando al otro jugador\n");
     }
     if (room->p1_ready && room->p2_ready){
-      strcat(response, start_game(room));
+      // mostrar el tablero
+      // cambiar fase de los jugadores a "choosing"
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, pedir_coordenadas(4));
+      room->client1->phase = "choosing4";
+      room->client2->phase = "choosing4";
+    }
+  }
+  else if (strcmp(client_user->phase, "choosing4"))
+  {
+    // verificar calidad del mensaje
+    // largo del mensaje = 5
+    // mensaje[0] = 1 o 2
+    // mensaje[1] = ","
+    // mensaje[2] = letra "A", "a", "B", "b", "C", "c", "D", "d", "E", "e"
+    // mensaje[3] = ","
+    // mensaje[4] = numero "1", "2", "3", "4", "5"
+    // Verificar
+    if (strlen(client_message) == 5)
+    {
+      char horizontal = client_message[0];
+      char coordenada_x = client_message[2];
+      char coordenada_y = client_message[4];
+      if(
+        (strcmp(&horizontal, "1") == 0 ||
+         strcmp(&horizontal, "2") == 0) &&
+        (strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
+         strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
+         strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
+         strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
+         strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
+        (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
+         strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
+         strcmp(&coordenada_y, "5") == 0))
+      {
+        if (validar_coordenadas(horizontal, 4, coordenada_x, coordenada_y, client_user))
+        {
+          client_user->phase = "choosing3";
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, pedir_coordenadas(3));
+        }
+        else
+        {
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+          strcat(response, pedir_coordenadas(4));
+        }
+      }
+    }
+    else
+    {
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+      strcat(response, pedir_coordenadas(4));
+    }
+  }
+  else if (strcmp(client_user->phase, "choosing3"))
+  {
+    // verificar calidad del mensaje
+    // largo del mensaje = 5
+    // mensaje[0] = 1 o 2
+    // mensaje[1] = ","
+    // mensaje[2] = letra "A", "a", "B", "b", "C", "c", "D", "d", "E", "e"
+    // mensaje[3] = ","
+    // mensaje[4] = numero "1", "2", "3", "4", "5"
+    // Verificar
+    if (strlen(client_message) == 5)
+    {
+      char horizontal = client_message[0];
+      char coordenada_x = client_message[2];
+      char coordenada_y = client_message[4];
+      if (
+        (strcmp(&horizontal, "1") == 0 ||
+         strcmp(&horizontal, "2") == 0) &&
+        (strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
+         strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
+         strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
+         strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
+         strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
+        (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
+         strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
+         strcmp(&coordenada_y, "5") == 0))
+      {
+
+        if (validar_coordenadas(horizontal, 3, coordenada_x, coordenada_y, client_user))
+        {
+          client_user->phase = "choosing2";
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, pedir_coordenadas(2));
+        }
+        else
+        {
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+          strcat(response, pedir_coordenadas(3));
+        }
+      }
+    }
+    else
+    {
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+      strcat(response, pedir_coordenadas(3));
+    }
+  }
+  else if (strcmp(client_user->phase, "choosing2"))
+  {
+    // verificar calidad del mensaje
+    // largo del mensaje = 5
+    // mensaje[0] = 1 o 2
+    // mensaje[1] = ","
+    // mensaje[2] = letra "A", "a", "B", "b", "C", "c", "D", "d", "E", "e"
+    // mensaje[3] = ","
+    // mensaje[4] = numero "1", "2", "3", "4", "5"
+    // Verificar
+    if (strlen(client_message) == 5)
+    {
+      char horizontal = client_message[0];
+      char coordenada_x = client_message[2];
+      char coordenada_y = client_message[4];
+      if(
+        (strcmp(&horizontal, "1") == 0 ||
+         strcmp(&horizontal, "2") == 0) &&
+        (strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
+         strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
+         strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
+         strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
+         strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
+        (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
+         strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
+         strcmp(&coordenada_y, "5") == 0))
+      {
+        if (validar_coordenadas(horizontal, 2, coordenada_x, coordenada_y, client_user))
+        {
+          client_user->phase = "confirm";
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, pedir_confirmacion());
+        }
+        else
+        {
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+          strcat(response, pedir_coordenadas(2));
+        }
+      }
+    }
+    else
+    {
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+      strcat(response, pedir_coordenadas(2));
+    }
+  }
+  else if (strcmp(client_user->phase, "confirm"))
+  {
+    if (strcmp(client_message, "s") || strcmp(client_message, "S"))
+    {
+      client_user->phase = "waiting";
+      if (client_user == client_user->room->client1)
+      {
+        if (client_user->room->client2->phase == "waiting")
+        {
+          client_user->phase = "on turn";
+          client_user->room->client2->phase = "not on turn";
+        }
+        if (strcmp(client_user->phase, "on turn"))
+        {
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, "Es tu turno, presiona enter para continuar.\n");
+        }
+        else
+        {
+          strcat(response, mostrar_tablero(client_user));
+          strcat(response, "Esperando al otro jugador.");
+        }
+      }
+    }
+    else if (strcmp(client_message, "n") || strcmp(client_message, "N"))
+    {
+      client_user->phase = "choosing4";
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, pedir_coordenadas(4));
+    }
+    else
+    {
+      strcat(response, "Por favor elija una opción válida.\n");
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, pedir_coordenadas(2));
+    }
+  }
+  else if (strcmp(client_user->phase, "on turn"))
+  {
+    strcat(response, mostrar_tablero(client_user));
+    strcat(response, pedir_disparo(client_user));
+    client_user->phase = "checking turn";
+  }
+  else if (strcmp(client_user->phase, "not on turn"))
+  {
+    strcat(response, mostrar_tablero(client_user));
+    strcat(response, "Esperando al otro jugador.");
+  }
+  else if (strcmp(client_user->phase, "checking turn"))
+  {
+    // verificar mensaje
+    // largo del mensaje = 3
+    // mensaje[0] = letra "A", "a", "B", "b", "C", "c", "D", "d", "E", "e"
+    // mensaje[1] = ","
+    // mensaje[2] = numero "1", "2", "3", "4", "5"
+    // Verificar
+    if (strlen(client_message) == 3) 
+    {
+      char coordenada_x = client_message[0];
+      char coordenada_y = client_message[2];
+      if ((strcmp(&coordenada_x, "A") == 0 || strcmp(&coordenada_x, "a") == 0 ||
+          strcmp(&coordenada_x, "B") == 0 || strcmp(&coordenada_x, "b") == 0 ||
+          strcmp(&coordenada_x, "C") == 0 || strcmp(&coordenada_x, "c") == 0 ||
+          strcmp(&coordenada_x, "D") == 0 || strcmp(&coordenada_x, "d") == 0 ||
+          strcmp(&coordenada_x, "E") == 0 || strcmp(&coordenada_x, "e") == 0) &&
+         (strcmp(&coordenada_y, "1") == 0 || strcmp(&coordenada_y, "2") == 0 ||
+          strcmp(&coordenada_y, "3") == 0 || strcmp(&coordenada_y, "4") == 0 ||
+          strcmp(&coordenada_y, "5") == 0))
+      {
+        char coordenada_x = client_message[0];
+        char coordenada_y = client_message[2];
+        strcat(response, mostrar_tablero(client_user));
+        strcat(response, verificar_disparo(client_user, coordenada_x, coordenada_y));
+        if (client_user->puntaje == 10)
+        {
+          strcat(response, "¡Has ganado!\n\n");
+          client_user->phase = "win";
+          if (client_user == client_user->room->client1) client_user->room->client2->phase = "lose";
+          else client_user->phase = "lose";
+        }
+        else
+        {
+          client_user->phase = "not on turn";
+          if (client_user == client_user->room->client1) client_user->room->client2->phase = "on turn";
+          else client_user->phase = "on turn";
+        }
+      }
+    }
+    else
+    {
+      strcat(response, mostrar_tablero(client_user));
+      strcat(response, "Coordenadas inválidas, por favor ingrese nuevamente.");
+      strcat(response, pedir_disparo(client_user));
     }
   }
   
@@ -229,15 +485,6 @@ char* mostar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   return lobby;
 }
 
-// TODO
-char* start_game(Room* room) {
-  char* game = malloc(500);
-  strcpy(game, "Comienza la partida\n");
-  strcat(game, "Turno de ");
-  strcat(game, room->client1->name);
-  strcat(game, "\n");
-  return game;
-}
 
 User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
   for (int i = 0; i < MAX_CLIENTS; i++) {

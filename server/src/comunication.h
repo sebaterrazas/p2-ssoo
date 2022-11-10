@@ -13,6 +13,10 @@ typedef struct user {
     char *phase;  // login, lobby, game
     char *status; // online, offline
     struct room *room;
+    int** tablero;
+    int** tablero_barcos;
+    int barcos[3];
+    int puntaje;
 } User;
 
 typedef struct room {
