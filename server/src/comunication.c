@@ -143,6 +143,10 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     strcat(response, lobby);
     free(lobby);
   }
+  else if (strcmp(client_user->name, "admin") == 0)
+  {
+
+  }
   ///Tratar de entrar a sala
   else if (strcmp(client_user->phase, "lobby")==0) {
     // Ver qué el mensaje del cliente sea un número de sala
@@ -533,25 +537,8 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       else strcat(response, "Esperando al otro jugador. Apreta Enter para actualizar.");
     }
   }
-  else if (strcmp(client_user->phase, "on turn") == 0){
-    if (client_user->room->client1 == client_user)
-    {
-      if (client_user->room->client2->phase == "finish")
-      {
-        strcat(response, "¡Has perdido!\n\n");
-        client_user->phase = "finish";
-        strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
-      }
-    }
-    else if (client_user->room->client2 == client_user)
-    {
-      if (client_user->room->client1->phase == "finish")
-      {
-        strcat(response, "¡Has perdido!\n\n");
-        client_user->phase = "finish";
-        strcpy(response, "¿Quieres seguir jugando? (s/n)\n");
-      }
-    }
+  else if (strcmp(client_user->phase, "on turn") == 0)
+  {
     char* tablero = mostrar_tablero(client_user);
     strcpy(response, tablero);
     free(tablero);
@@ -598,8 +585,15 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         if (client_user->puntaje == 9)
         {
           strcat(response, "¡Has ganado!\n\n");
-          strcat(response, "¿Quieres seguir jugando? (s/n)\n");
           client_user->phase = "finish";
+          if (client_user == client_user->room->client1)
+          {
+            client_user->room->client2->phase = "finish";
+          }
+          else
+          {
+            client_user->room->client1->phase = "finish";
+          }
           server_send_image(client_user->socket, 0, "welldone.jpg");
         }
       }
@@ -611,17 +605,25 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
       strcat(response, pedir_disparo(client_user));
     }
   }
+  else if ((strcmp(client_user->phase, "finish") == 0) && (strcmp(client_message, "") == 0))
+  {
+    if (client_user->puntaje < 9)
+    {
+      strcpy(response, "¡Has perdido!\n\n");
+    }
+    strcat(response, "¿Quieres seguir jugando? (s/n)\n");
+  }
   else if (strcmp(client_user->phase, "finish") == 0)
   {
-    client_user->room->occupied_by = 0;
-    client_user->room->p1_ready = false;
-    client_user->room->p2_ready = false;
-    if (client_user->room->client1 == client_user) client_user->room->client1 = NULL;
-    else client_user->room->client2 = NULL;
-    client_user->room = NULL;
-    client_user->puntaje = 0;
     if (strcmp(client_message, "s") == 0 || strcmp(client_message, "S") == 0)
     {
+      client_user->room->occupied_by--;
+      client_user->room->p1_ready = false;
+      client_user->room->p2_ready = false;
+      if (client_user->room->client1 == client_user) client_user->room->client1 = NULL;
+      else client_user->room->client2 = NULL;
+      if (client_user->room->occupied_by == 0) client_user->room = NULL;
+      client_user->puntaje = 0;
       client_user->phase = "lobby";
       char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
       strcpy(response, lobby);
@@ -629,7 +631,14 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     }
     else if (strcmp(client_message, "n") == 0 || strcmp(client_message, "N") == 0)
     {
-      client_user->phase = "finish";        
+      client_user->room->occupied_by --;
+      client_user->room->p1_ready = false;
+      client_user->room->p2_ready = false;
+      if (client_user->room->client1 == client_user) client_user->room->client1 = NULL;
+      else client_user->room->client2 = NULL;
+      if (client_user->room->occupied_by == 0) client_user->room = NULL;
+      client_user->puntaje = 0;
+      client_user->phase = "finish";
       client_user->status = "offline";
       server_send_message(client_socket, 1, "¡Hasta luego!");
       return true;
