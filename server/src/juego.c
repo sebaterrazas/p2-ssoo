@@ -87,7 +87,7 @@ void iniciar_tablero(Room* room)
             room->client2->tablero_barcos[i][j] = 0;
         }
     }
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 3; i++)
     {
         room->client1->barcos[i] = 0;
         room->client2->barcos[i] = 0;
@@ -112,8 +112,7 @@ void colocar_barco(bool horizontal, int barco, int x, int y, User* user)
             user->tablero_barcos[i][x] = barco;
         }
     }
-    // ???????
-    user->barcos[barco - 1] = barco;
+    user->barcos[barco - 2] = barco;
 }
 
 bool validar_coordenadas(char horizontal1, int barco, char coordenada_x, char coordenada_y, User* user)
@@ -168,15 +167,17 @@ char* pedir_coordenadas(int barco)
 char* pedir_disparo()
 {
     char* peticion = malloc(1000);
-    strcat(peticion, "  Elige las coordenadas de tu disparo: \n");
+    strcpy(peticion, "  Elige las coordenadas de tu disparo: \n");
     strcat(peticion, "    - El formato es el siguiente: \n");
     strcat(peticion, "      X,Y\n");
     strcat(peticion, "    - Donde X es la coordenada horizontal y Y la vertical\n");
+    return peticion;
 }
 
 char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
 {
     char* resultado = malloc(1000);
+    strcpy(resultado, "");
     if (coordenada_x == 'A' || coordenada_x == 'a') x = 0;
     else if (coordenada_x == 'B' || coordenada_x == 'b') x = 1;
     else if (coordenada_x == 'C' || coordenada_x == 'c') x = 2;
@@ -197,8 +198,8 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
             user->room->client2->tablero[y][x] = 2;
             user->puntaje++;
             strcat(resultado, "\n\n ¡Has acertado!\n\n");
-            user->room->client2->barcos[user->room->client2->tablero_barcos[y][x] - 1]--;
-            if (user->room->client2->barcos[user->room->client2->tablero_barcos[y][x] - 1] == 0)
+            user->room->client2->barcos[user->room->client2->tablero_barcos[y][x] - 2]--;
+            if (user->room->client2->barcos[user->room->client2->tablero_barcos[y][x] - 2] == 0)
             {
                 strcat(resultado, "\n\n¡Has hundido un barco!\n\n\n");
             }
@@ -224,8 +225,8 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
             user->room->client1->tablero[y][x] = 2;
             user->puntaje++;
             strcat(resultado, "\n\n ¡Has acertado!\n\n");
-            user->room->client1->barcos[user->room->client1->tablero_barcos[y][x] - 1]--;
-            if (user->room->client1->barcos[user->room->client1->tablero_barcos[y][x] - 1] == 0)
+            user->room->client1->barcos[user->room->client1->tablero_barcos[y][x] - 2]--;
+            if (user->room->client1->barcos[user->room->client1->tablero_barcos[y][x] - 2] == 0)
             {
                 strcat(resultado, "¡Has hundido un barco!\n\n");
             }
@@ -244,7 +245,7 @@ char* verificar_disparo(User* user, char coordenada_x, char coordenada_y)
 
 char* pedir_confirmacion()
 {
-    char* peticion = malloc(26);
+    char* peticion = malloc(60);
     strcpy(peticion, "  ¿Esta es tu flota? (s/n)\n");
     return peticion;
 }

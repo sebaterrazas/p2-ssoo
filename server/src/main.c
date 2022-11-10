@@ -101,15 +101,8 @@ int main(int argc, char *argv[]){
           for (int i = 0; i < ALTO; i++) {
             client_user->tablero_barcos[i] = calloc(ANCHO, sizeof(int));
           }
-          // ?????
-          client_user->barcos = calloc(5, sizeof(int));
-          client_user->barcos[0] = 1;
-          client_user->barcos[1] = 2;
-          client_user->barcos[2] = 3;
-          client_user->barcos[3] = 4;
-          client_user->barcos[4] = 5;
+          client_user->barcos = calloc(3, sizeof(int));
           client_user->puntaje = 0;
-
           FD_SET(client_socket, &current_sockets);
         } else {
           // Se maneja una conexión existente
