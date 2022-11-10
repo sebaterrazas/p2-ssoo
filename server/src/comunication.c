@@ -96,7 +96,6 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
   if (strcmp(client_message, "exit")==0) {
     client_user->status = "offline";
     // Le enviamos la respuesta
-    
     server_send_message(client_socket, 1, "¡Hasta luego!");
     return true;
   }
@@ -117,8 +116,14 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
         client_user->name = old_user->name;
         client_user->phase = old_user->phase;
         client_user->status = "online";
+        client_user->room = old_user->room;
+        client_user->tablero = old_user->tablero;
+        client_user->tablero_barcos = old_user->tablero_barcos;
+        client_user->barcos = old_user->barcos;
+        client_user->puntaje = old_user->puntaje;
         current_users[old_user->id] = client_user;
         free(old_user);
+
         char* reconnect = reconnect_msg(client_user, current_users, rooms_list, MAX_CLIENTS);
         strcat(response, reconnect);
         free(reconnect);
@@ -697,11 +702,6 @@ User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
 char* reconnect_msg(User* client_user, User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   char* response = malloc(500);
   strcpy(response, "Bienvenido de vuelta, apreta Enter para continuar.\n");
-  strcat(response, client_user->name);
-  strcat(response, "\n\n");
-  char* lobby = mostrar_lobby(current_users, rooms_list, MAX_CLIENTS);
-  strcat(response, lobby);
-  free(lobby);
   return response;
 }
 
