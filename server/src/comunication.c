@@ -683,7 +683,6 @@ char* mostrar_lobby(User** current_users, Room** rooms_list, int MAX_CLIENTS) {
   return lobby;
 }
 
-
 User* check_username(char* username, User** current_users, int MAX_CLIENTS) {
   for (int i = 0; i < MAX_CLIENTS; i++) {
     if (current_users[i] != NULL && current_users[i]->name != NULL) {
