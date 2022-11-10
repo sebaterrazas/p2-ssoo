@@ -637,7 +637,7 @@ bool handle_communication(int client_socket, User** current_users, Room** rooms_
     {
       client_user->phase = "finish";        
       client_user->status = "offline";
-      server_send_message(client_socket, 1, "Gracias por jugar.\n\n¡Hasta luego!");
+      server_send_message(client_socket, 1, "¡Hasta luego!");
       return true;
     }
     else
