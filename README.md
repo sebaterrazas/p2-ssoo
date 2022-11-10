@@ -29,7 +29,7 @@ No aplica
 
 ## Principales funciones del programa
 
-Siguiendo las recomendaciones de diseño para construir el programa indicadas en el enunciado se crearon diversas funciones, dentro de las cuales las más importantes son handle_communication que permite manejar la comunicación entre cliente y servidor de manera robusta.Tambien, mostrar_lobby, start_game y reconnect_msg las cuales permiten las condiciones necesarias para el inicio del juego y reconexión en caso de ser necesario.
+Siguiendo las recomendaciones de diseño para construir el programa indicadas en el enunciado se crearon diversas funciones, dentro de las cuales las más importantes son handle_communication que permite manejar la comunicación entre cliente y servidor de manera robusta.Tambien, mostrar_lobby, start_game y reconnect_msg las cuales permiten las condiciones necesarias para el inicio del juego y reconexión en caso de ser necesario. Por otra parte para la ejececución del juego se utilizaron las siguientes funciones: mostrar_tablero, iniciar_tablero, colocar_barco, validar_coordenadas, pedir_coordenadas, pedir_disparo, verificar_disparo, pedir_confirmación las cuales permiten que la dinámica de juego estilo battleship se implemente de manera correcta.
 
 ## Bonus
 
