@@ -19,9 +19,17 @@ Para poder ejecutar el juego se debe correr los siguientes comandos desde la ter
 
 ./client -i 127.0.0.1 -p 8000
 
-## Descripción
+## Uso del programa
 
-Para la lógica del juego se realizarón una serie de funciones para poder implementar los requerimientos necesarios para la ejecución de este.
+Una vez establecida la conexión entre el cliente y el servidor, cada jugador se dirige al lobby para luego trasladarse a la sala de juego. A medida que avanza el programa se van indicando por medio de la consola los comandos que se esperan recibir para continuar la ejecución del juego.
+
+## Paquetes utilizados en la comunicación
+
+No aplica
+
+## Principales funciones del programa
+
+Siguiendo las recomendaciones de diseño para construir el programa indicadas en el enunciado se crearon diversas funciones, dentro de las cuales las más importantes son handle_communication que permite manejar la comunicación entre cliente y servidor de manera robusta.Tambien, mostrar_lobby, start_game y reconnect_msg las cuales permiten las condiciones necesarias para el inicio del juego y reconexión en caso de ser necesario.
 
 ## Bonus
 
